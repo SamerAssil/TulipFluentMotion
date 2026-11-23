@@ -526,7 +526,7 @@ function CountTo(const AFromValue, ATargetValue: Double; const AFormatStr: strin
 ```
 ```pascal
 LblBalance.Motion
-  .CountTo(0.0, 1250000.75, '$%,0.2f', 1600)
+  .CountTo(0.0, 1250000.75, '$%0.2f', 1600)
   .WithEase(TFluentEase.OutCubic)
   .Start;
 ```
