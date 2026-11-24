@@ -156,7 +156,8 @@ uses
   {$ENDIF}
   FMX.Graphics,
   FMX.Objects,
-  Tulip.FluentMotion.Engine;
+  Tulip.FluentMotion.Engine,
+  Tulip.FluentMotion.Helper;
 
 {$IFDEF MSWINDOWS}
 type
@@ -737,7 +738,7 @@ begin
     Exit;
 
   {$IFNDEF MSWINDOWS}
-  if Assigned(GetRootControl) then
+  if GetRootControl <> nil then
   begin
     GetRootControl.Shake(AIntensity, ADurationMs);
     Exit;
@@ -759,7 +760,7 @@ begin
     Exit;
 
   {$IFNDEF MSWINDOWS}
-  if Assigned(GetRootControl) then
+  if GetRootControl <> nil then
   begin
     GetRootControl.Fade(AFromOpacity, ATargetOpacity, ADurationMs);
     Exit;
@@ -839,7 +840,7 @@ begin
     Exit;
 
   {$IFNDEF MSWINDOWS}
-  if Assigned(GetRootControl) then
+  if GetRootControl <> nil then
   begin
     GetRootControl.SlideIn(ADirection, ADurationMs);
     Exit;
@@ -878,7 +879,7 @@ begin
     Exit;
 
   {$IFNDEF MSWINDOWS}
-  if Assigned(GetRootControl) then
+  if GetRootControl <> nil then
   begin
     GetRootControl.SlideOut(ADirection, ADurationMs);
     Exit;
@@ -911,7 +912,7 @@ begin
     Exit;
 
   {$IFNDEF MSWINDOWS}
-  if Assigned(GetRootControl) then
+  if GetRootControl <> nil then
   begin
     GetRootControl.PopIn(ADurationMs);
     Exit;
@@ -928,7 +929,7 @@ begin
     Exit;
 
   {$IFNDEF MSWINDOWS}
-  if Assigned(GetRootControl) then
+  if GetRootControl <> nil then
   begin
     GetRootControl.PopOut(ADurationMs);
     Exit;
