@@ -7,7 +7,6 @@ uses
   System.Classes,
   System.Types,
   System.Math,
-  System.Generics.Collections,
   System.Skia,
   FMX.Types,
   FMX.Controls,
@@ -21,16 +20,13 @@ type
   { Blur Effect: Smoothly animates Gaussian blur using Skia TSkImageFilter.MakeBlur }
   TFluentBlurEffect = class(TFluentShaderEffect)
   private
-    class var FControlSoftness: TDictionary<TControl, Single>;
-    class constructor CreateClass;
-    class destructor DestroyClass;
-  private
     FFromSoftness: Single;
     FTargetSoftness: Single;
     FStartSoftness: Single;
     FInitialSoftness: Single;
     FCurrentSoftness: Single;
     FAutoCapture: Boolean;
+    procedure SaveSoftness(const AValue: Single);
   protected
     procedure DoAttach; override;
     procedure DoStart; override;
@@ -54,23 +50,28 @@ type
 
 implementation
 
+uses
+  Tulip.FluentMotion.Driver;
+
 { TFluentBlurEffect }
 
-class constructor TFluentBlurEffect.CreateClass;
-begin
-  FControlSoftness := TDictionary<TControl, Single>.Create;
-end;
-
-class destructor TFluentBlurEffect.DestroyClass;
-begin
-  FreeAndNil(FControlSoftness);
-end;
-
 class function TFluentBlurEffect.GetCurrentSoftness(const AControl: TControl): Single;
+var
+  Driver: TFluentMotionDriver;
 begin
   Result := 0.0;
-  if Assigned(AControl) and Assigned(FControlSoftness) then
-    FControlSoftness.TryGetValue(AControl, Result);
+  Driver := TFluentMotionDriver.FindDriver(AControl);
+  if Assigned(Driver) then
+    Result := Driver.BlurSoftness;
+end;
+
+procedure TFluentBlurEffect.SaveSoftness(const AValue: Single);
+var
+  Driver: TFluentMotionDriver;
+begin
+  Driver := TFluentMotionDriver.FindDriver(FControl);
+  if Assigned(Driver) then
+    Driver.BlurSoftness := AValue;
 end;
 
 constructor TFluentBlurEffect.Create(const ATargetSoftness: Single; const ADurationMs: Cardinal);
@@ -116,39 +117,25 @@ begin
     FStartSoftness := FFromSoftness;
 
   FCurrentSoftness := FStartSoftness;
-  if Assigned(FControl) and Assigned(FControlSoftness) then
-    FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
+  SaveSoftness(FCurrentSoftness);
 end;
 
 procedure TFluentBlurEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
 begin
   FCurrentSoftness := Max(0.0, FStartSoftness + (FTargetSoftness - FStartSoftness) * AProgress);
-  if Assigned(FControl) and Assigned(FControlSoftness) then
-    FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
+  SaveSoftness(FCurrentSoftness);
 end;
 
 procedure TFluentBlurEffect.DoFinish;
 begin
   FCurrentSoftness := FTargetSoftness;
-  if Assigned(FControl) and Assigned(FControlSoftness) then
-  begin
-    if FCurrentSoftness <= 0.001 then
-      FControlSoftness.Remove(FControl)
-    else
-      FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
-  end;
+  SaveSoftness(FCurrentSoftness);
 end;
 
 procedure TFluentBlurEffect.DoReset;
 begin
   FCurrentSoftness := FInitialSoftness;
-  if Assigned(FControl) and Assigned(FControlSoftness) then
-  begin
-    if FCurrentSoftness <= 0.001 then
-      FControlSoftness.Remove(FControl)
-    else
-      FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
-  end;
+  SaveSoftness(FCurrentSoftness);
 end;
 
 procedure TFluentBlurEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);

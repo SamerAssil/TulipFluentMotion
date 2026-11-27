@@ -1220,6 +1220,19 @@ begin
     TCustomForm(FHostForm).StyleLookup := '';
   end;
 
+  // Clean up any glass backdrop rectangle created by FormHelper
+  for var I := FHostForm.ChildrenCount - 1 downto 0 do
+  begin
+    if (FHostForm.Children[I] is TRectangle) and
+       (TRectangle(FHostForm.Children[I]).Name = '__FluentGlassBackdrop') then
+    begin
+      var LBackdropRect := TRectangle(FHostForm.Children[I]);
+      LBackdropRect.StopMotion;
+      LBackdropRect.Parent := nil;
+      LBackdropRect.Free;
+    end;
+  end;
+
   UpdateTintLayer;
   FHostForm.Invalidate;
 end;

@@ -8,7 +8,6 @@ uses
   System.Types,
   System.Math,
   System.UITypes,
-  System.Generics.Collections,
   System.Skia,
   FMX.Types,
   FMX.Controls,
@@ -21,15 +20,6 @@ uses
 type
   { Glow Effect: Animates neon / ambient outer glow using Skia TSkMaskFilter.MakeBlur }
   TFluentGlowEffect = class(TFluentShaderEffect)
-  private
-    type
-      TGlowState = record
-        Softness: Single;
-        Opacity: Single;
-      end;
-    class var FControlStates: TDictionary<TControl, TGlowState>;
-    class constructor CreateClass;
-    class destructor DestroyClass;
   private
     FGlowColor: TAlphaColor;
     FFromSoftness: Single;
@@ -68,17 +58,10 @@ type
 
 implementation
 
+uses
+  Tulip.FluentMotion.Driver;
+
 { TFluentGlowEffect }
-
-class constructor TFluentGlowEffect.CreateClass;
-begin
-  FControlStates := TDictionary<TControl, TGlowState>.Create;
-end;
-
-class destructor TFluentGlowEffect.DestroyClass;
-begin
-  FreeAndNil(FControlStates);
-end;
 
 constructor TFluentGlowEffect.Create(const AGlowColor: TAlphaColor; const ATargetSoftness, ATargetOpacity: Single; const ADurationMs: Cardinal);
 begin
@@ -105,44 +88,52 @@ end;
 
 procedure TFluentGlowEffect.SaveControlState(const ASoftness, AOpacity: Single);
 var
-  State: TGlowState;
+  Driver: TFluentMotionDriver;
 begin
-  if not Assigned(FControl) or not Assigned(FControlStates) then
-    Exit;
-
-  if AOpacity <= 0.01 then
-    FControlStates.Remove(FControl)
-  else
+  Driver := TFluentMotionDriver.FindDriver(FControl);
+  if Assigned(Driver) then
   begin
-    State.Softness := ASoftness;
-    State.Opacity := AOpacity;
-    FControlStates.AddOrSetValue(FControl, State);
+    Driver.GlowSoftness := ASoftness;
+    Driver.GlowOpacity := AOpacity;
   end;
 end;
 
 procedure TFluentGlowEffect.DoAttach;
 var
-  State: TGlowState;
+  Driver: TFluentMotionDriver;
 begin
   inherited DoAttach;
-  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
+  if FAutoCapture then
   begin
-    FInitialSoftness := State.Softness;
-    FInitialOpacity := State.Opacity;
-    FFromSoftness := FInitialSoftness;
-    FFromOpacity := FInitialOpacity;
+    Driver := TFluentMotionDriver.FindDriver(FControl);
+    if Assigned(Driver) and (Driver.GlowOpacity > 0.01) then
+    begin
+      FInitialSoftness := Driver.GlowSoftness;
+      FInitialOpacity := Driver.GlowOpacity;
+      FFromSoftness := FInitialSoftness;
+      FFromOpacity := FInitialOpacity;
+    end;
   end;
 end;
 
 procedure TFluentGlowEffect.DoStart;
 var
-  State: TGlowState;
+  Driver: TFluentMotionDriver;
 begin
   inherited DoStart;
-  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
+  if FAutoCapture then
   begin
-    FStartSoftness := State.Softness;
-    FStartOpacity := State.Opacity;
+    Driver := TFluentMotionDriver.FindDriver(FControl);
+    if Assigned(Driver) and (Driver.GlowOpacity > 0.01) then
+    begin
+      FStartSoftness := Driver.GlowSoftness;
+      FStartOpacity := Driver.GlowOpacity;
+    end
+    else
+    begin
+      FStartSoftness := 0.0;
+      FStartOpacity := 0.0;
+    end;
   end
   else
   begin

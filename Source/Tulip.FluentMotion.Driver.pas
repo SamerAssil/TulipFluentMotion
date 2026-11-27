@@ -40,6 +40,17 @@ type
     FSpeed: Single;
     FIsPaused: Boolean;
     FIsPhaseSequenceFinished: Boolean;
+
+    { Per-control persistent effect states (freed automatically with host control) }
+    FBlurSoftness: Single;
+    FGrayscaleAmount: Single;
+    FHueAngleDeg: Single;
+    FGlowSoftness: Single;
+    FGlowOpacity: Single;
+    FShadowDistance: Single;
+    FShadowSoftness: Single;
+    FShadowOpacity: Single;
+    FLiquidWaveLevel: Single;
     function HasContinuousEffect: Boolean;
     procedure AdvanceToNextPhase(out APendingComplete: TMotionCallback);
     procedure RecalculateEngineDuration;
@@ -81,6 +92,17 @@ type
     property Speed: Single read FSpeed write SetSpeed;
     property OnComplete: TMotionCallback read FOnComplete write FOnComplete;
     property OnProgress: TMotionProgressCallback read FOnProgress write FOnProgress;
+
+    { Persistent Effect States }
+    property BlurSoftness: Single read FBlurSoftness write FBlurSoftness;
+    property GrayscaleAmount: Single read FGrayscaleAmount write FGrayscaleAmount;
+    property HueAngleDeg: Single read FHueAngleDeg write FHueAngleDeg;
+    property GlowSoftness: Single read FGlowSoftness write FGlowSoftness;
+    property GlowOpacity: Single read FGlowOpacity write FGlowOpacity;
+    property ShadowDistance: Single read FShadowDistance write FShadowDistance;
+    property ShadowSoftness: Single read FShadowSoftness write FShadowSoftness;
+    property ShadowOpacity: Single read FShadowOpacity write FShadowOpacity;
+    property LiquidWaveLevel: Single read FLiquidWaveLevel write FLiquidWaveLevel;
   end;
 
 implementation

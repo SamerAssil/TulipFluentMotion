@@ -7,7 +7,6 @@ uses
   System.Classes,
   System.Types,
   System.Math,
-  System.Generics.Collections,
   System.Skia,
   FMX.Types,
   FMX.Controls,
@@ -37,16 +36,13 @@ type
       '    return half4(clamp(rotated, half3(0.0), half3(c.a)), c.a);' + sLineBreak +
       '}';
   private
-    class var FControlAngles: TDictionary<TControl, Single>;
-    class constructor CreateClass;
-    class destructor DestroyClass;
-  private
     FFromAngleDeg: Single;
     FTargetAngleDeg: Single;
     FStartAngleDeg: Single;
     FInitialAngleDeg: Single;
     FCurrentAngleDeg: Single;
     FAutoCapture: Boolean;
+    procedure SaveAngleDeg(const AValue: Single);
   protected
     procedure ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single); override;
     procedure DoAttach; override;
@@ -72,23 +68,28 @@ type
 
 implementation
 
+uses
+  Tulip.FluentMotion.Driver;
+
 { TFluentHueRotationEffect }
 
-class constructor TFluentHueRotationEffect.CreateClass;
-begin
-  FControlAngles := TDictionary<TControl, Single>.Create;
-end;
-
-class destructor TFluentHueRotationEffect.DestroyClass;
-begin
-  FreeAndNil(FControlAngles);
-end;
-
 class function TFluentHueRotationEffect.GetCurrentAngleDeg(const AControl: TControl): Single;
+var
+  Driver: TFluentMotionDriver;
 begin
   Result := 0.0;
-  if Assigned(AControl) and Assigned(FControlAngles) then
-    FControlAngles.TryGetValue(AControl, Result);
+  Driver := TFluentMotionDriver.FindDriver(AControl);
+  if Assigned(Driver) then
+    Result := Driver.HueAngleDeg;
+end;
+
+procedure TFluentHueRotationEffect.SaveAngleDeg(const AValue: Single);
+var
+  Driver: TFluentMotionDriver;
+begin
+  Driver := TFluentMotionDriver.FindDriver(FControl);
+  if Assigned(Driver) then
+    Driver.HueAngleDeg := AValue;
 end;
 
 constructor TFluentHueRotationEffect.Create(const ATargetAngleDeg: Single; const ADurationMs: Cardinal);
@@ -141,39 +142,25 @@ begin
     FStartAngleDeg := FFromAngleDeg;
 
   FCurrentAngleDeg := FStartAngleDeg;
-  if Assigned(FControl) and Assigned(FControlAngles) then
-    FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
+  SaveAngleDeg(FCurrentAngleDeg);
 end;
 
 procedure TFluentHueRotationEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
 begin
   FCurrentAngleDeg := FStartAngleDeg + (FTargetAngleDeg - FStartAngleDeg) * AProgress;
-  if Assigned(FControl) and Assigned(FControlAngles) then
-    FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
+  SaveAngleDeg(FCurrentAngleDeg);
 end;
 
 procedure TFluentHueRotationEffect.DoFinish;
 begin
   FCurrentAngleDeg := FTargetAngleDeg;
-  if Assigned(FControl) and Assigned(FControlAngles) then
-  begin
-    if Abs(FMod(FCurrentAngleDeg, 360.0)) <= 0.01 then
-      FControlAngles.Remove(FControl)
-    else
-      FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
-  end;
+  SaveAngleDeg(FCurrentAngleDeg);
 end;
 
 procedure TFluentHueRotationEffect.DoReset;
 begin
   FCurrentAngleDeg := FInitialAngleDeg;
-  if Assigned(FControl) and Assigned(FControlAngles) then
-  begin
-    if Abs(FMod(FCurrentAngleDeg, 360.0)) <= 0.01 then
-      FControlAngles.Remove(FControl)
-    else
-      FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
-  end;
+  SaveAngleDeg(FCurrentAngleDeg);
 end;
 
 procedure TFluentHueRotationEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);

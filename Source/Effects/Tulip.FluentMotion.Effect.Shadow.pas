@@ -8,7 +8,6 @@ uses
   System.Types,
   System.Math,
   System.UITypes,
-  System.Generics.Collections,
   System.Skia,
   FMX.Types,
   FMX.Controls,
@@ -21,16 +20,6 @@ uses
 type
   { Shadow / Elevation Effect: Smoothly animates depth, softness, and opacity using Skia TSkMaskFilter.MakeBlur }
   TFluentShadowEffect = class(TFluentShaderEffect)
-  private
-    type
-      TShadowState = record
-        Distance: Single;
-        Softness: Single;
-        Opacity: Single;
-      end;
-    class var FControlStates: TDictionary<TControl, TShadowState>;
-    class constructor CreateClass;
-    class destructor DestroyClass;
   private
     FFromDistance: Single;
     FTargetDistance: Single;
@@ -78,17 +67,10 @@ type
 
 implementation
 
+uses
+  Tulip.FluentMotion.Driver;
+
 { TFluentShadowEffect }
-
-class constructor TFluentShadowEffect.CreateClass;
-begin
-  FControlStates := TDictionary<TControl, TShadowState>.Create;
-end;
-
-class destructor TFluentShadowEffect.DestroyClass;
-begin
-  FreeAndNil(FControlStates);
-end;
 
 constructor TFluentShadowEffect.Create(const ATargetDistance, ATargetSoftness, ATargetOpacity: Single; const ADurationMs: Cardinal);
 begin
@@ -150,8 +132,6 @@ begin
   end
   else
   begin
-    // Linear / quadratic scale: elevation 1 -> 2px dist, 0.2 soft, 0.25 opac
-    // elevation 4 -> 16px dist, 0.65 soft, 0.55 opac
     Dist := LClampedLevel * 3.5;
     Soft := EnsureRange(0.15 + (LClampedLevel * 0.12), 0.0, 1.0);
     Opac := EnsureRange(0.20 + (LClampedLevel * 0.08), 0.0, 1.0);
@@ -162,48 +142,57 @@ end;
 
 procedure TFluentShadowEffect.SaveControlState(const ADistance, ASoftness, AOpacity: Single);
 var
-  State: TShadowState;
+  Driver: TFluentMotionDriver;
 begin
-  if not Assigned(FControl) or not Assigned(FControlStates) then
-    Exit;
-
-  if (ADistance <= 0.01) or (AOpacity <= 0.01) then
-    FControlStates.Remove(FControl)
-  else
+  Driver := TFluentMotionDriver.FindDriver(FControl);
+  if Assigned(Driver) then
   begin
-    State.Distance := ADistance;
-    State.Softness := ASoftness;
-    State.Opacity := AOpacity;
-    FControlStates.AddOrSetValue(FControl, State);
+    Driver.ShadowDistance := ADistance;
+    Driver.ShadowSoftness := ASoftness;
+    Driver.ShadowOpacity := AOpacity;
   end;
 end;
 
 procedure TFluentShadowEffect.DoAttach;
 var
-  State: TShadowState;
+  Driver: TFluentMotionDriver;
 begin
   inherited DoAttach;
-  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
+  if FAutoCapture then
   begin
-    FInitialDistance := State.Distance;
-    FInitialSoftness := State.Softness;
-    FInitialOpacity := State.Opacity;
-    FFromDistance := FInitialDistance;
-    FFromSoftness := FInitialSoftness;
-    FFromOpacity := FInitialOpacity;
+    Driver := TFluentMotionDriver.FindDriver(FControl);
+    if Assigned(Driver) and (Driver.ShadowDistance > 0.01) and (Driver.ShadowOpacity > 0.01) then
+    begin
+      FInitialDistance := Driver.ShadowDistance;
+      FInitialSoftness := Driver.ShadowSoftness;
+      FInitialOpacity := Driver.ShadowOpacity;
+      FFromDistance := FInitialDistance;
+      FFromSoftness := FInitialSoftness;
+      FFromOpacity := FInitialOpacity;
+    end;
   end;
 end;
 
 procedure TFluentShadowEffect.DoStart;
 var
-  State: TShadowState;
+  Driver: TFluentMotionDriver;
 begin
   inherited DoStart;
-  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
+  if FAutoCapture then
   begin
-    FStartDistance := State.Distance;
-    FStartSoftness := State.Softness;
-    FStartOpacity := State.Opacity;
+    Driver := TFluentMotionDriver.FindDriver(FControl);
+    if Assigned(Driver) and (Driver.ShadowDistance > 0.01) and (Driver.ShadowOpacity > 0.01) then
+    begin
+      FStartDistance := Driver.ShadowDistance;
+      FStartSoftness := Driver.ShadowSoftness;
+      FStartOpacity := Driver.ShadowOpacity;
+    end
+    else
+    begin
+      FStartDistance := 0.0;
+      FStartSoftness := 0.0;
+      FStartOpacity := 0.0;
+    end;
   end
   else
   begin
@@ -267,7 +256,6 @@ begin
 
   SaveCount := ACanvas.Save;
   try
-    // Exclude control interior so drop shadow renders strictly around/beneath the control
     if CornerRadius > 0.5 then
     begin
       ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Difference, True);

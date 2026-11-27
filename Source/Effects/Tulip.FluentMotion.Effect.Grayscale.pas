@@ -7,7 +7,6 @@ uses
   System.Classes,
   System.Types,
   System.Math,
-  System.Generics.Collections,
   System.Skia,
   FMX.Types,
   FMX.Controls,
@@ -31,10 +30,6 @@ type
       '    return half4(mix(c.rgb, gray, clamp(uAmount, 0.0, 1.0)), c.a);' + sLineBreak +
       '}';
   private
-    class var FControlAmounts: TDictionary<TControl, Single>;
-    class constructor CreateClass;
-    class destructor DestroyClass;
-  private
     FMonochromeComponent: TMonochromeEffect;
     FFromAmount: Single;
     FTargetAmount: Single;
@@ -43,6 +38,7 @@ type
     FCurrentAmount: Single;
     FAutoCapture: Boolean;
     function GetOrCreateMonochromeComponent: TMonochromeEffect;
+    procedure SaveAmount(const AValue: Single);
   protected
     procedure ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single); override;
     procedure DoAttach; override;
@@ -67,23 +63,28 @@ type
 
 implementation
 
+uses
+  Tulip.FluentMotion.Driver;
+
 { TFluentGrayscaleEffect }
 
-class constructor TFluentGrayscaleEffect.CreateClass;
-begin
-  FControlAmounts := TDictionary<TControl, Single>.Create;
-end;
-
-class destructor TFluentGrayscaleEffect.DestroyClass;
-begin
-  FreeAndNil(FControlAmounts);
-end;
-
 class function TFluentGrayscaleEffect.GetCurrentAmount(const AControl: TControl): Single;
+var
+  Driver: TFluentMotionDriver;
 begin
   Result := 0.0;
-  if Assigned(AControl) and Assigned(FControlAmounts) then
-    FControlAmounts.TryGetValue(AControl, Result);
+  Driver := TFluentMotionDriver.FindDriver(AControl);
+  if Assigned(Driver) then
+    Result := Driver.GrayscaleAmount;
+end;
+
+procedure TFluentGrayscaleEffect.SaveAmount(const AValue: Single);
+var
+  Driver: TFluentMotionDriver;
+begin
+  Driver := TFluentMotionDriver.FindDriver(FControl);
+  if Assigned(Driver) then
+    Driver.GrayscaleAmount := AValue;
 end;
 
 constructor TFluentGrayscaleEffect.Create(const ATargetAmount: Single; const ADurationMs: Cardinal);
@@ -159,39 +160,25 @@ begin
     FStartAmount := FFromAmount;
 
   FCurrentAmount := FStartAmount;
-  if Assigned(FControl) and Assigned(FControlAmounts) then
-    FControlAmounts.AddOrSetValue(FControl, FCurrentAmount);
+  SaveAmount(FCurrentAmount);
 end;
 
 procedure TFluentGrayscaleEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
 begin
   FCurrentAmount := EnsureRange(FStartAmount + (FTargetAmount - FStartAmount) * AProgress, 0.0, 1.0);
-  if Assigned(FControl) and Assigned(FControlAmounts) then
-    FControlAmounts.AddOrSetValue(FControl, FCurrentAmount);
+  SaveAmount(FCurrentAmount);
 end;
 
 procedure TFluentGrayscaleEffect.DoFinish;
 begin
   FCurrentAmount := FTargetAmount;
-  if Assigned(FControl) and Assigned(FControlAmounts) then
-  begin
-    if FCurrentAmount <= 0.001 then
-      FControlAmounts.Remove(FControl)
-    else
-      FControlAmounts.AddOrSetValue(FControl, FCurrentAmount);
-  end;
+  SaveAmount(FCurrentAmount);
 end;
 
 procedure TFluentGrayscaleEffect.DoReset;
 begin
   FCurrentAmount := FInitialAmount;
-  if Assigned(FControl) and Assigned(FControlAmounts) then
-  begin
-    if FCurrentAmount <= 0.001 then
-      FControlAmounts.Remove(FControl)
-    else
-      FControlAmounts.AddOrSetValue(FControl, FCurrentAmount);
-  end;
+  SaveAmount(FCurrentAmount);
   if Assigned(FMonochromeComponent) then
     FMonochromeComponent.Enabled := (FInitialAmount >= 0.5);
 end;

@@ -75,6 +75,8 @@ type
 
     function Clone: IMotionEffect; override;
 
+    class procedure ClearEffectCache; static;
+
     property SkSL: string read FSkSL;
     property DrawMode: TShaderDrawMode read FDrawMode write FDrawMode;
     property CompileError: string read FCompileError;
@@ -137,15 +139,12 @@ type
       '    vec4 col = mix(uColor, uCrestColor, crest);' + sLineBreak +
       '    return half4(col.rgb * col.a, col.a);' + sLineBreak +
       '}';
-  private
-    class var FControlLevels: TDictionary<TControl, Single>;
-    class constructor CreateClass;
-    class destructor DestroyClass;
   protected
     FFromLevel: Single;
     FToLevel: Single;
     FCurrentLevel: Single;
     FExplicitFrom: Boolean;
+    procedure SaveLevel(const AValue: Single);
     procedure DoAttach; override;
     procedure DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single); override;
     procedure DoFinish; override;
@@ -547,21 +546,55 @@ type
       '}';
   private
     FTargets: TArray<TControl>;
+    FWatcher: TComponent;
     FBlurRadius: Single;
     FSmoothness: Single;
+    procedure HandleTargetRemoved(const ATarget: TControl);
   protected
     function GetBackdropInputFilter: ISkImageFilter; override;
     procedure ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single); override;
   public
     constructor Create(const ATargets: TArray<TControl>; const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ASmoothness: Single = 18.0; const ADurationMs: Cardinal = 0); reintroduce; overload;
     constructor Create(const ATargets: TArray<TControl>; const ASmoothness, ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal = 0); reintroduce; overload;
+    destructor Destroy; override;
     function Clone: IMotionEffect; override;
   end;
 
 implementation
 
 uses
-  FMX.Forms;
+  FMX.Forms,
+  Tulip.FluentMotion.Driver;
+
+type
+  TFluentTargetWatcher = class(TComponent)
+  private
+    FOnRemove: TProc<TControl>;
+  protected
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+  public
+    constructor CreateWatcher(const ATargets: TArray<TControl>; const AOnRemove: TProc<TControl>);
+  end;
+
+constructor TFluentTargetWatcher.CreateWatcher(const ATargets: TArray<TControl>; const AOnRemove: TProc<TControl>);
+var
+  Ctrl: TControl;
+begin
+  inherited Create(nil);
+  FOnRemove := AOnRemove;
+  for Ctrl in ATargets do
+  begin
+    if Assigned(Ctrl) then
+      Ctrl.FreeNotification(Self);
+  end;
+end;
+
+procedure TFluentTargetWatcher.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited Notification(AComponent, Operation);
+  if (Operation = TOperation.opRemove) and (AComponent is TControl) and Assigned(FOnRemove) then
+    FOnRemove(TControl(AComponent));
+end;
 
 { TShaderUniform }
 
@@ -631,7 +664,15 @@ begin
   inherited Destroy;
 end;
 
+class procedure TFluentShaderEffect.ClearEffectCache;
+begin
+  if Assigned(FEffectCache) then
+    FEffectCache.Clear;
+end;
+
 function TFluentShaderEffect.GetOrCreateEffect(const ASkSL: string): ISkRuntimeEffect;
+const
+  MAX_EFFECT_CACHE_SIZE = 128;
 var
   ErrText: string;
 begin
@@ -644,7 +685,11 @@ begin
 
   Result := TSkRuntimeEffect.MakeForShader(ASkSL, ErrText);
   if Assigned(Result) then
-    FEffectCache.Add(ASkSL, Result)
+  begin
+    if FEffectCache.Count >= MAX_EFFECT_CACHE_SIZE then
+      FEffectCache.Clear;
+    FEffectCache.Add(ASkSL, Result);
+  end
   else
     FCompileError := ErrText;
 end;
@@ -869,14 +914,13 @@ end;
 
 { TFluentLiquidWaveEffect }
 
-class constructor TFluentLiquidWaveEffect.CreateClass;
+procedure TFluentLiquidWaveEffect.SaveLevel(const AValue: Single);
+var
+  Driver: TFluentMotionDriver;
 begin
-  FControlLevels := TDictionary<TControl, Single>.Create;
-end;
-
-class destructor TFluentLiquidWaveEffect.DestroyClass;
-begin
-  FControlLevels.Free;
+  Driver := TFluentMotionDriver.FindDriver(FControl);
+  if Assigned(Driver) then
+    Driver.LiquidWaveLevel := AValue;
 end;
 
 constructor TFluentLiquidWaveEffect.Create(const ATargetLevel: Single; const AColor, ACrestColor: TAlphaColor; const ADurationMs: Cardinal);
@@ -910,13 +954,8 @@ begin
   inherited DoAttach;
   if not FExplicitFrom then
   begin
-    if Assigned(FControl) and FControlLevels.TryGetValue(FControl, FFromLevel) then
-      FCurrentLevel := FFromLevel
-    else
-    begin
-      FFromLevel := 0.0;
-      FCurrentLevel := 0.0;
-    end;
+    FFromLevel := GetCurrentLevel(FControl);
+    FCurrentLevel := FFromLevel;
     SetUniform('uFromLevel', FFromLevel);
     SetUniform('uToLevel', FToLevel);
   end;
@@ -926,8 +965,7 @@ procedure TFluentLiquidWaveEffect.DoUpdate(const AProgress: Single; const AElaps
 begin
   inherited DoUpdate(AProgress, AElapsedTimeSec);
   FCurrentLevel := FFromLevel + (FToLevel - FFromLevel) * AProgress;
-  if Assigned(FControl) then
-    FControlLevels.AddOrSetValue(FControl, FCurrentLevel);
+  SaveLevel(FCurrentLevel);
 end;
 
 procedure TFluentLiquidWaveEffect.DoFinish;
@@ -937,8 +975,7 @@ begin
   FCurrentLevel := FToLevel;
   SetUniform('uFromLevel', FToLevel);
   SetUniform('uToLevel', FToLevel);
-  if Assigned(FControl) then
-    FControlLevels.AddOrSetValue(FControl, FToLevel);
+  SaveLevel(FToLevel);
 end;
 
 procedure TFluentLiquidWaveEffect.ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single);
@@ -971,10 +1008,13 @@ begin
 end;
 
 class function TFluentLiquidWaveEffect.GetCurrentLevel(const AControl: TControl): Single;
+var
+  Driver: TFluentMotionDriver;
 begin
-  if Assigned(AControl) and FControlLevels.TryGetValue(AControl, Result) then
-    Exit;
   Result := 0.0;
+  Driver := TFluentMotionDriver.FindDriver(AControl);
+  if Assigned(Driver) then
+    Result := Driver.LiquidWaveLevel;
 end;
 
 { TFluentFrostedGlassEffect }
@@ -1297,6 +1337,7 @@ constructor TFluentLiquidGlassGroupEffect.Create(const ATargets: TArray<TControl
 begin
   inherited Create(LIQUID_GLASS_GROUP_SKSL, ADurationMs, TShaderDrawMode.Background);
   FTargets := Copy(ATargets);
+  FWatcher := TFluentTargetWatcher.CreateWatcher(FTargets, HandleTargetRemoved);
   FSmoothness := Max(0.0, ASmoothness);
   FBlurRadius := ABlurRadius;
   SetUniform('uSmoothness', FSmoothness);
@@ -1304,6 +1345,23 @@ begin
   SetUniform('uAberration', AAberration);
   SetUniform('uBlurRadius', ABlurRadius);
   SetUniform('uGlowIntensity', AGlowIntensity);
+end;
+
+destructor TFluentLiquidGlassGroupEffect.Destroy;
+begin
+  FreeAndNil(FWatcher);
+  inherited Destroy;
+end;
+
+procedure TFluentLiquidGlassGroupEffect.HandleTargetRemoved(const ATarget: TControl);
+var
+  I: Integer;
+begin
+  for I := 0 to High(FTargets) do
+  begin
+    if FTargets[I] = ATarget then
+      FTargets[I] := nil;
+  end;
 end;
 
 function TFluentLiquidGlassGroupEffect.GetBackdropInputFilter: ISkImageFilter;
