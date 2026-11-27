@@ -70,8 +70,6 @@ uses
 
 توفر المكتبة طريقتين متكاملتين لتشغيل الحركات:
 
-<!-- IMAGE_PLACEHOLDER: Fluent API Chaining Diagram / Code Editor Screenshot -->
-![Fluent API Usage](docs/images/fluent-api-guide.png)
 
 ### أ. أسلوب السطر الواحد السريع (One-Liners)
 عبر مساعد الصنف `TFluentMotionControlHelper` الملتصق بأي كائن `TControl`:
@@ -99,8 +97,6 @@ CardProduct.Motion
 
 يتم تشغيل المؤثرات تفاعلياً داخل أحداث FMX القياسية بطريقة انسيابية وخفيفة:
 
-<!-- IMAGE_PLACEHOLDER: Interactive Micro-Interactions in action (Hover, Press, Ripple, Shake) -->
-![Event Handling Demo](docs/images/event-handling.gif)
 
 ### أ. تفاعل التحويم (Hover: OnMouseEnter / OnMouseLeave)
 لرفع العنصر أو تكبيره قليلاً عند وقوف مؤشر الفأرة عليه وإرجاعه لحجمه الأصلي عند المغادرة:
@@ -189,8 +185,6 @@ end;
 
 ## 4. التحويلات الهندسية والمصفوفية (Geometric Transforms)
 
-<!-- IMAGE_PLACEHOLDER: Geometric Transforms Showcase (Scale, Move, Rotate, Flip3D, ResizeTo) -->
-![Transforms Showcase](docs/images/transforms-guide.png)
 
 ### أ. التحجيم والتكبير (Scale)
 ![التحجيم والتكبير](media/scaling_modifiers.gif)
@@ -273,8 +267,6 @@ MyControl.Motion
 
 ## 5. الشفافية، الصبغات، والفلاتر البصرية (Opacity, Colors & Filters)
 
-<!-- IMAGE_PLACEHOLDER: Opacity, Color Tints, Shadows and Glow Effects GIF -->
-![Colors and Filters Demo](docs/images/colors-filters.gif)
 
 ### أ. التلاشي والظهور الذكي (Smart Opacity & Fade)
 ![التلاشي والظهور الذكي](media/smart_opacity_fades.gif)
@@ -540,8 +532,6 @@ function Uniform(const AName: string; const AValue: TArray<Single>): IMotionBuil
 
 تم تصميم أدوات النصوص لحل مشاكل تحريك الخطوط العربية في بيئات الرسوم:
 
-<!-- IMAGE_PLACEHOLDER: Typography Demo (Arabic Typewriter with cursor, Numeric Counter, ShimmerText) -->
-![Typography & Arabic Motion Demo](docs/images/typography-showcase.gif)
 
 ### أ. الآلة الكاتبة الداعمة للتشكيل العربي (Typewriter)
 تعتمد المكتبة على محلل ذكي للعناقيد الحرفية (`TFluentGraphemeHelper`) يقوم بدمج علامات التشكيل والتنوين والهمزات مع الحرف الأصلي ككتلة واحدة، لمنع ظهور حركات التشكيل مفصولة أو مشوهة أثناء الكتابة التدريجية:
@@ -602,8 +592,6 @@ LblVipTitle.Motion
 
 عبر مساعد الصنف `TFluentMotionFormHelper`، يمكنك تحريك نافذة نظام التشغيل نفسها (`TCommonCustomForm`) عند الفتح والإغلاق والتنبيه:
 
-<!-- IMAGE_PLACEHOLDER: Form Motion GIF (Shake Window on error, FadeIn Form, SlideIn Form) -->
-![Form Motion Demo](docs/images/form-motion-demo.gif)
 
 ```pascal
 procedure TLoginForm.OnPasswordFailed;
@@ -629,8 +617,6 @@ end;
 
 ## 10. فيزياء النوابض ومنحنيات التخفيف (Spring Physics & Easing Curves)
 
-<!-- IMAGE_PLACEHOLDER: Spring Curves Diagram / Visual Comparison Graph -->
-![Spring Physics Comparison](docs/images/spring-curves.png)
 
 ### أ. النوابض الفيزيائية الواقعية (`TFluentSpring`)
 تعتمد النوابض على حل معادلات التذبذب التوافقي تحليلياً بدون أخطاء تقريبية:
@@ -682,8 +668,6 @@ CardView.Motion
 
 ## 11. سلاسل الحركات المترابطة والتحكم الحي (Pipeline, Sequencing & Runtime Controls)
 
-<!-- IMAGE_PLACEHOLDER: Sequencing Pipeline Diagram (Phase 1 -> Wait -> Phase 2 -> OnComplete) -->
-![Motion Pipeline Diagram](docs/images/pipeline-diagram.png)
 
 ### أ. الربط الزمني والمراحل المتعاقبة (`.&Then` و `.Wait`)
 تتيح الدالة `.&Then` إنهاء المرحلة المتزامنة الحالية وبدء مرحلة جديدة تنتظر انتهاء سابقتها:
@@ -725,8 +709,6 @@ DialogCard.Motion
 
 ## 12. إدارة الذاكرة وقواعد الأداء العالي (Memory Management & Best Practices)
 
-<!-- IMAGE_PLACEHOLDER: Memory Leaks Verification Proof (0 Leaks / DUnitX) Screenshot -->
-![Zero Leaks Proof](docs/images/zero-leaks.png)
 
 1. **لا تستدعِ `.Free` على كائنات `IMotionBuilder` نهائياً:**
    كائنات البناء تُدار تلقائياً عبر الواجهات (Reference Counted Interfaces)، ويقوم محرك `TFluentMotionEngine` بتنظيف كافة المؤثرات بعد اكتمالها بنسبة تسريب صفرية (`Tests Leaked : 0`).

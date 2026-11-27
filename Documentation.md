@@ -66,8 +66,6 @@ This unit automatically re-exports all core interfaces (`IMotionBuilder`), confi
 
 The framework provides two interchangeable programming patterns:
 
-<!-- IMAGE_PLACEHOLDER: Fluent API Chaining Diagram / Code Editor Screenshot -->
-![Fluent API Usage](docs/images/fluent-api-guide.png)
 
 ### A. Instant One-Liners
 Via `TFluentMotionControlHelper`, which extends every `TControl` instance:
@@ -95,8 +93,6 @@ CardProduct.Motion
 
 Trigger fluid feedback in response to user inputs within standard FMX event handlers:
 
-<!-- IMAGE_PLACEHOLDER: Interactive Micro-Interactions in action (Hover, Press, Ripple, Shake) -->
-![Event Handling Demo](docs/images/event-handling.gif)
 
 ### A. Mouse Hover (OnMouseEnter / OnMouseLeave)
 Elevate cards or buttons on hover and settle back smoothly on leave:
@@ -186,8 +182,6 @@ end;
 
 ## 4. Geometric Transforms & Spatial Geometry
 
-<!-- IMAGE_PLACEHOLDER: Geometric Transforms Showcase (Scale, Move, Rotate, Flip3D, ResizeTo) -->
-![Transforms Showcase](docs/images/transforms-guide.png)
 
 ### A. Scaling Modifiers
 ![Scaling Modifiers](media/scaling_modifiers.gif)
@@ -270,8 +264,6 @@ MyControl.Motion
 
 ## 5. Opacity, Color Transitions & Hardware Filters
 
-<!-- IMAGE_PLACEHOLDER: Opacity, Color Tints, Shadows and Glow Effects GIF -->
-![Colors and Filters Demo](docs/images/colors-filters.gif)
 
 ### A. Smart Opacity & Fades
 ![Smart Opacity & Fades](media/smart_opacity_fades.gif)
@@ -537,8 +529,6 @@ function Uniform(const AName: string; const AValue: TArray<Single>): IMotionBuil
 
 Engineered specifically to overcome text animation limitations in FireMonkey:
 
-<!-- IMAGE_PLACEHOLDER: Typography Demo (Arabic Typewriter with cursor, Numeric Counter, ShimmerText) -->
-![Typography & Arabic Motion Demo](docs/images/typography-showcase.gif)
 
 ### A. Ligature-Safe Arabic Typewriter (`Typewriter`)
 Utilizes `TFluentGraphemeHelper` to preserve Unicode Arabic ligatures and combining marks (Harakat, Tashkeel, Tanween, Shadda), preventing disconnected glyphs or crashes during incremental reveals:
@@ -599,8 +589,6 @@ LblVipTitle.Motion
 
 Directly animate the operating system window (`TCommonCustomForm`) using `TFluentMotionFormHelper`:
 
-<!-- IMAGE_PLACEHOLDER: Form Motion GIF (Shake Window on error, FadeIn Form, SlideIn Form) -->
-![Form Motion Demo](docs/images/form-motion-demo.gif)
 
 ```pascal
 procedure TLoginForm.OnPasswordFailed;
@@ -626,8 +614,6 @@ end;
 
 ## 10. Analytical Spring Physics & Easing Curves
 
-<!-- IMAGE_PLACEHOLDER: Spring Curves Diagram / Visual Comparison Graph -->
-![Spring Physics Comparison](docs/images/spring-curves.png)
 
 ### A. Analytical Damped Springs (`TFluentSpring`)
 Solves second-order harmonic oscillator differential equations analytically without numerical approximation errors:
@@ -679,8 +665,6 @@ CardView.Motion
 
 ## 11. Motion Pipelines, Sequencing & Runtime Controls
 
-<!-- IMAGE_PLACEHOLDER: Sequencing Pipeline Diagram (Phase 1 -> Wait -> Phase 2 -> OnComplete) -->
-![Motion Pipeline Diagram](docs/images/pipeline-diagram.png)
 
 ### A. Phase Sequencing (`.&Then` and `.Wait`)
 The `.&Then` operator finalizes the active concurrent phase barrier and begins a subsequent phase:
@@ -722,8 +706,6 @@ DialogCard.Motion
 
 ## 12. Memory Management & High-Performance Best Practices
 
-<!-- IMAGE_PLACEHOLDER: Memory Leaks Verification Proof (0 Leaks / DUnitX) Screenshot -->
-![Zero Leaks Proof](docs/images/zero-leaks.png)
 
 1. **Never Call `.Free` on `IMotionBuilder` Instances:**
    Builders are reference-counted interfaces. The singleton engine (`TFluentMotionEngine`) cleans up effects automatically upon completion with 0 memory leaks (`Tests Leaked : 0`).

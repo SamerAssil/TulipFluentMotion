@@ -11,10 +11,14 @@
 [![Memory Hygiene](https://img.shields.io/badge/Memory%20Leaks-0%20(Zero%20Leaks)-success.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)]()
 
+![TulipFluentMotion Hero Banner](media/hero-banner.svg)
+
+<video src="media/intro.mp4" controls autoplay loop muted playsinline width="100%"></video>
+
+> [🎬 Watch Intro Video (`media/intro.mp4`)](media/intro.mp4)
+
 ---
 
-<!-- IMAGE_PLACEHOLDER: Hero Banner / Master Showcase GIF demonstrating fluid motions, Liquid Glass refraction, spring pop-ups, and shaders -->
-![TulipFluentMotion Hero Banner](docs/images/hero-banner.gif)
 
 ---
 
@@ -115,8 +119,6 @@ Self.Shake(14.0, 380);
 
 ---
 
-<!-- IMAGE_PLACEHOLDER: Micro-Interactions Showcase GIF (PopIn, Shake, Pulse, Ripple, Flip3D) -->
-![Micro-Interactions Showcase](docs/images/micro-interactions.gif)
 
 ---
 
@@ -133,8 +135,6 @@ Self.Shake(14.0, 380);
 | **`Flip3D(TargetAngleDeg, Axis, [Duration], [Anchor])`** | `.rotation3DEffect` | True 2.5D perspective card flip around horizontal or vertical axes (`FlipHorizontal`, `FlipVertical`). |
 | **`ResizeTo(Width, Height, [Duration], [Anchor])`** | `.frame(width:height:)` | Smooth physical dimension animation for accordion menus and expandable cards. |
 
-<!-- IMAGE_PLACEHOLDER: Transforms GIF (Scale, MoveTo, Rotate, Flip3D, ResizeTo) -->
-![Transforms Demo](docs/images/transforms-demo.gif)
 
 ```pascal
 // Card 3D perspective flip with bouncy spring physics (optional trailing anchor)
@@ -163,8 +163,6 @@ CardProfile.Motion
 | **`GooeyMetaball`** | `.GooeyMetaball(BlobColor, Speed, Duration)` | Organic fluid droplets merging and separating dynamically. |
 | **`CustomShader`** | `.CustomShader(SkSLCode, Duration, DrawMode)` | Compile custom SkSL runtime code and chain live uniforms (`Uniform`). |
 
-<!-- IMAGE_PLACEHOLDER: SkSL Shaders Showcase GIF (Liquid Glass Refraction, BorderBeam, MeshGradient, LiquidWave) -->
-![SkSL Shaders Showcase](docs/images/shaders-showcase.gif)
 
 #### Liquid Glass & Droplet Merging Example (Authentic Apple Liquid Glass):
 ```pascal
@@ -194,8 +192,6 @@ Layout1.LiquidGlassGroup([Circle1, Circle2], TFluentGlassStyle.Frosted, 18.0);
 | **`CountTo`** | `.CountTo(FromValue, TargetValue, FormatStr, Duration)` | Rolling odometer numeric counter for financial analytics and KPI gauges. |
 | **`ShimmerText`** | `.ShimmerText(HighlightColor, Duration, Direction, Angle)` | Vector contour glyph shimmer strictly masked inside letter bodies with zero background box leaks. |
 
-<!-- IMAGE_PLACEHOLDER: Typography & Counters GIF (Arabic Typewriter, Rolling Odometer CountTo, ShimmerText) -->
-![Typography and Counters Demo](docs/images/typography-demo.gif)
 
 ```pascal
 // 1. Arabic ligature-safe typewriter with blinking cursor
@@ -220,8 +216,6 @@ LblTitle.Motion
 
 ### 4. Analytical Spring Physics & Easing Curves
 
-<!-- IMAGE_PLACEHOLDER: Spring Physics vs Easing Curves Comparison GIF -->
-![Spring Physics Demo](docs/images/spring-physics.gif)
 
 #### A. Pre-Calculated Spring Presets (`TFluentSpring`):
 Built on analytical solutions to second-order damped harmonic oscillators:
@@ -280,8 +274,6 @@ DialogBox.Motion
 
 Every modifier, physics solver, and memory contract is verified via headless **DUnitX** automated tests:
 
-<!-- IMAGE_PLACEHOLDER: DUnitX Test Suite Execution Screenshot showing 60/60 tests passed with 0 leaks -->
-![DUnitX Test Suite Results](docs/images/dunitx-results.png)
 
 ```powershell
 # Run automated tests from PowerShell:

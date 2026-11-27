@@ -15,10 +15,14 @@
 [![Memory Hygiene](https://img.shields.io/badge/Memory%20Leaks-0%20(Zero%20Leaks)-success.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)]()
 
+![غلاف TulipFluentMotion](media/hero-banner.svg)
+
+<video src="media/intro.mp4" controls autoplay loop muted playsinline width="100%"></video>
+
+> [🎬 مشاهدة الفيديو التعريفي (`media/intro.mp4`)](media/intro.mp4)
+
 ---
 
-<!-- IMAGE_PLACEHOLDER: Hero Banner / Master Showcase GIF demonstrating fluid motions, Liquid Glass refraction, spring pop-ups, and shaders -->
-![TulipFluentMotion Hero Banner](docs/images/hero-banner.gif)
 
 ---
 
@@ -119,8 +123,6 @@ Self.Shake(14.0, 380);
 
 ---
 
-<!-- IMAGE_PLACEHOLDER: Micro-Interactions Showcase GIF (PopIn, Shake, Pulse, Ripple, Flip3D) -->
-![Micro-Interactions Showcase](docs/images/micro-interactions.gif)
 
 ---
 
@@ -137,8 +139,6 @@ Self.Shake(14.0, 380);
 | **`Flip3D(TargetAngleDeg, Axis, [Duration], [Anchor])`** | `.rotation3DEffect` | دوران ثلاثي الأبعاد مع منظور حقيقي حول المحور الأفقي أو الرأسي (`FlipHorizontal`, `FlipVertical`). |
 | **`ResizeTo(Width, Height, [Duration], [Anchor])`** | `.frame(width:height:)` | تحريك الأبعاد الحقيقية للعنصر بسلاسة (لقوائم الأكورديون والنوافذ القابلة للتمدد). |
 
-<!-- IMAGE_PLACEHOLDER: Transforms GIF (Scale, MoveTo, Rotate, Flip3D, ResizeTo) -->
-![Transforms Demo](docs/images/transforms-demo.gif)
 
 ```pascal
 // بطاقة تنقلب أفقياً بزاوية 180 درجة مع نابض حيوي وتمرير نقطة الارتكاز مباشرة
@@ -167,8 +167,6 @@ CardProfile.Motion
 | **`GooeyMetaball`** | `.GooeyMetaball(BlobColor, Speed, Duration)` | كرات زئبقية هلامية تلتحم وتنفصل بحركة عضوية حرة. |
 | **`CustomShader`** | `.CustomShader(SkSLCode, Duration, DrawMode)` | حقن وتجميع كود SkSL مخصص مع تمرير متغيرات حية (`Uniform`). |
 
-<!-- IMAGE_PLACEHOLDER: SkSL Shaders Showcase GIF (Liquid Glass Refraction, BorderBeam, MeshGradient, LiquidWave) -->
-![SkSL Shaders Showcase](docs/images/shaders-showcase.gif)
 
 #### مثال: زجاج Apple السائل ودمج القطرات (Live Backdrop Refraction & Merging)
 ```pascal
@@ -198,8 +196,6 @@ Layout1.LiquidGlassGroup([Circle1, Circle2], TFluentGlassStyle.Frosted, 18.0);
 | **`CountTo`** | `.CountTo(FromValue, TargetValue, FormatStr, Duration)` | عداد أرقام مالي وإحصائي فائق السلاسة مع دعم العملات والنسب المئوية. |
 | **`ShimmerText`** | `.ShimmerText(HighlightColor, Duration, Direction, Angle)` | لمعان ضوئي متجهي محصور **داخل خطوط الأحرف فقط** بدون أي خلفية أو تشويه. |
 
-<!-- IMAGE_PLACEHOLDER: Typography & Counters GIF (Arabic Typewriter, Rolling Odometer CountTo, ShimmerText) -->
-![Typography and Counters Demo](docs/images/typography-demo.gif)
 
 ```pascal
 // 1. آلة كاتبة متوافقة مع التشكيل العربي
@@ -224,8 +220,6 @@ LblTitle.Motion
 
 ### 4. فيزياء النوابض ومنحنيات التخفيف (Spring Physics & Easing Curves)
 
-<!-- IMAGE_PLACEHOLDER: Spring Physics vs Easing Curves Comparison GIF -->
-![Spring Physics Demo](docs/images/spring-physics.gif)
 
 #### أ. النوابض الفيزيائية الجاهزة (`TFluentSpring`):
 تعتمد المكتبة على معادلات التحليل الرياضي للتردد الزاوي والتخميد الحرج:
@@ -284,8 +278,6 @@ DialogBox.Motion
 
 تخضع كافة ميزات المكتبة لاختبارات جودة صارمة بدون واجهة رسومية (**Headless**) عبر إطار العمل المعتمد **DUnitX**:
 
-<!-- IMAGE_PLACEHOLDER: DUnitX Test Suite Execution Screenshot showing 60/60 tests passed with 0 leaks -->
-![DUnitX Test Suite Results](docs/images/dunitx-results.png)
 
 ```powershell
 # أمر تشغيل الاختبارات الآلية من موجه الأوامر:
