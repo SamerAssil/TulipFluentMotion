@@ -220,8 +220,12 @@ type
     function RippleDistortion(const ACenter: TPointF; const ARippleColor: TAlphaColor = $8000BFFF; const AWaveWidth: Single = 24.0; const ADurationMs: Cardinal = 600): IMotionBuilder; overload;
     function NeonGlow(const AGlowColor: TAlphaColor = $FF00FFCC; const AGlowRadius: Single = 16.0; const APulseSpeed: Single = 4.0; const ADurationMs: Cardinal = 1500): IMotionBuilder;
     function GooeyMetaball(const ABlobColor: TAlphaColor = $DDFF007F; const ASpeed: Single = 2.0; const ADurationMs: Cardinal = 3000): IMotionBuilder;
-    function LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
-    function LiquidGlass(const ARefrMagnitude: Single = 14.0; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
+    function Glass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
+    function Glass(const ARefrMagnitude: Single = 14.0; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
+    function LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 0): IMotionBuilder; overload;
+    function LiquidGlass(const ARefrMagnitude: Single = 14.0; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 0): IMotionBuilder; overload;
+    function LiquidGlassGroup(const ATargets: TArray<TControl>; const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ASmoothness: Single = 18.0; const ADurationMs: Cardinal = 0): IMotionBuilder; overload;
+    function LiquidGlassGroup(const ATargets: TArray<TControl>; const ASmoothness, ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal = 0): IMotionBuilder; overload;
 
     { Shader Configuration Chaining }
     function Uniform(const AName: string; const AValue: Single): IMotionBuilder; overload;

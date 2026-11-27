@@ -5,25 +5,32 @@ interface
 uses
   System.SysUtils,
   System.Classes,
+  System.Types,
   System.Math,
+  System.Generics.Collections,
+  System.Skia,
   FMX.Types,
   FMX.Controls,
-  FMX.Effects,
+  FMX.Objects,
+  FMX.Graphics,
   Tulip.FluentMotion.Types,
   Tulip.FluentMotion.Interfaces,
-  Tulip.FluentMotion.Effect.Base;
+  Tulip.FluentMotion.Effect.Shader;
 
 type
-  { Blur Effect: Smoothly animates blur softness using hardware-accelerated FMX TBlurEffect }
-  TFluentBlurEffect = class(TFluentMotionEffectBase)
+  { Blur Effect: Smoothly animates Gaussian blur using Skia TSkImageFilter.MakeBlur }
+  TFluentBlurEffect = class(TFluentShaderEffect)
   private
-    FBlurComponent: TBlurEffect;
+    class var FControlSoftness: TDictionary<TControl, Single>;
+    class constructor CreateClass;
+    class destructor DestroyClass;
+  private
     FFromSoftness: Single;
     FTargetSoftness: Single;
     FStartSoftness: Single;
     FInitialSoftness: Single;
+    FCurrentSoftness: Single;
     FAutoCapture: Boolean;
-    function GetOrCreateBlurComponent: TBlurEffect;
   protected
     procedure DoAttach; override;
     procedure DoStart; override;
@@ -34,120 +41,153 @@ type
     constructor Create(const ATargetSoftness: Single; const ADurationMs: Cardinal = 250); reintroduce; overload;
     constructor Create(const AFromSoftness, ATargetSoftness: Single; const ADurationMs: Cardinal = 250); reintroduce; overload;
 
+    procedure Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single); override;
+    procedure PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single); override;
+
     function Clone: IMotionEffect; override;
 
+    class function GetCurrentSoftness(const AControl: TControl): Single; static;
+
     property TargetSoftness: Single read FTargetSoftness write FTargetSoftness;
+    property CurrentSoftness: Single read FCurrentSoftness;
   end;
 
 implementation
 
 { TFluentBlurEffect }
 
+class constructor TFluentBlurEffect.CreateClass;
+begin
+  FControlSoftness := TDictionary<TControl, Single>.Create;
+end;
+
+class destructor TFluentBlurEffect.DestroyClass;
+begin
+  FreeAndNil(FControlSoftness);
+end;
+
+class function TFluentBlurEffect.GetCurrentSoftness(const AControl: TControl): Single;
+begin
+  Result := 0.0;
+  if Assigned(AControl) and Assigned(FControlSoftness) then
+    FControlSoftness.TryGetValue(AControl, Result);
+end;
+
 constructor TFluentBlurEffect.Create(const ATargetSoftness: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(ADurationMs);
+  inherited Create('', ADurationMs, TShaderDrawMode.Overlay);
   FTargetSoftness := Max(0.0, ATargetSoftness);
   FFromSoftness := 0.0;
+  FStartSoftness := 0.0;
+  FInitialSoftness := 0.0;
+  FCurrentSoftness := 0.0;
   FAutoCapture := True;
   FEase := TFluentEase.OutCubic;
 end;
 
 constructor TFluentBlurEffect.Create(const AFromSoftness, ATargetSoftness: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(ADurationMs);
+  inherited Create('', ADurationMs, TShaderDrawMode.Overlay);
   FFromSoftness := Max(0.0, AFromSoftness);
   FTargetSoftness := Max(0.0, ATargetSoftness);
+  FStartSoftness := FFromSoftness;
+  FInitialSoftness := FFromSoftness;
+  FCurrentSoftness := FFromSoftness;
   FAutoCapture := False;
   FEase := TFluentEase.OutCubic;
 end;
 
-function TFluentBlurEffect.GetOrCreateBlurComponent: TBlurEffect;
-var
-  I: Integer;
-begin
-  if not Assigned(FControl) then
-    Exit(nil);
-
-  for I := 0 to FControl.ChildrenCount - 1 do
-  begin
-    if FControl.Children[I] is TBlurEffect then
-    begin
-      FBlurComponent := TBlurEffect(FControl.Children[I]);
-      Exit(FBlurComponent);
-    end;
-  end;
-
-  FBlurComponent := TBlurEffect.Create(FControl);
-  FBlurComponent.Stored := False;
-  FBlurComponent.Parent := FControl;
-  FBlurComponent.Enabled := False;
-  FBlurComponent.Softness := 0.0;
-  Result := FBlurComponent;
-end;
-
 procedure TFluentBlurEffect.DoAttach;
 begin
-  GetOrCreateBlurComponent;
-  if Assigned(FBlurComponent) then
+  inherited DoAttach;
+  if FAutoCapture and Assigned(FControl) then
   begin
-    if FBlurComponent.Enabled then
-      FInitialSoftness := FBlurComponent.Softness
-    else
-      FInitialSoftness := 0.0;
-
-    if FAutoCapture then
-      FFromSoftness := FInitialSoftness;
+    FInitialSoftness := GetCurrentSoftness(FControl);
+    FFromSoftness := FInitialSoftness;
   end;
 end;
 
 procedure TFluentBlurEffect.DoStart;
 begin
-  GetOrCreateBlurComponent;
-  if Assigned(FBlurComponent) then
-  begin
-    if FAutoCapture then
-    begin
-      if FBlurComponent.Enabled then
-        FStartSoftness := FBlurComponent.Softness
-      else
-        FStartSoftness := 0.0;
-    end
-    else
-      FStartSoftness := FFromSoftness;
+  inherited DoStart;
+  if FAutoCapture and Assigned(FControl) then
+    FStartSoftness := GetCurrentSoftness(FControl)
+  else
+    FStartSoftness := FFromSoftness;
 
-    if (FStartSoftness > 0.001) or (FTargetSoftness > 0.001) then
-      FBlurComponent.Enabled := True;
-  end;
+  FCurrentSoftness := FStartSoftness;
+  if Assigned(FControl) and Assigned(FControlSoftness) then
+    FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
 end;
 
 procedure TFluentBlurEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
-var
-  CurSoftness: Single;
 begin
-  if not Assigned(FBlurComponent) then
-    Exit;
-
-  CurSoftness := Max(0.0, FStartSoftness + (FTargetSoftness - FStartSoftness) * AProgress);
-  FBlurComponent.Softness := CurSoftness;
-  FBlurComponent.Enabled := (CurSoftness > 0.001);
+  FCurrentSoftness := Max(0.0, FStartSoftness + (FTargetSoftness - FStartSoftness) * AProgress);
+  if Assigned(FControl) and Assigned(FControlSoftness) then
+    FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
 end;
 
 procedure TFluentBlurEffect.DoFinish;
 begin
-  if Assigned(FBlurComponent) then
+  FCurrentSoftness := FTargetSoftness;
+  if Assigned(FControl) and Assigned(FControlSoftness) then
   begin
-    FBlurComponent.Softness := FTargetSoftness;
-    FBlurComponent.Enabled := (FTargetSoftness > 0.001);
+    if FCurrentSoftness <= 0.001 then
+      FControlSoftness.Remove(FControl)
+    else
+      FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
   end;
 end;
 
 procedure TFluentBlurEffect.DoReset;
 begin
-  if Assigned(FBlurComponent) then
+  FCurrentSoftness := FInitialSoftness;
+  if Assigned(FControl) and Assigned(FControlSoftness) then
   begin
-    FBlurComponent.Softness := FInitialSoftness;
-    FBlurComponent.Enabled := (FInitialSoftness > 0.001);
+    if FCurrentSoftness <= 0.001 then
+      FControlSoftness.Remove(FControl)
+    else
+      FControlSoftness.AddOrSetValue(FControl, FCurrentSoftness);
   end;
+end;
+
+procedure TFluentBlurEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);
+var
+  Sigma, CornerRadius: Single;
+  BlurFilter: ISkImageFilter;
+  PaintObj: ISkPaint;
+  SaveCount: Integer;
+begin
+  if (not Assigned(ACanvas)) or (FCurrentSoftness <= 0.001) then
+    Exit;
+
+  Sigma := FCurrentSoftness * 3.0;
+  BlurFilter := TSkImageFilter.MakeBlur(Sigma, Sigma, nil, TSkTileMode.Clamp);
+  if not Assigned(BlurFilter) then
+    Exit;
+
+  CornerRadius := ExtractCornerRadius;
+  SaveCount := ACanvas.Save;
+  try
+    if CornerRadius > 0.5 then
+      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Intersect, True)
+    else if Assigned(FControl) and (FControl is TCircle) then
+      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5), TSkClipOp.Intersect, True)
+    else
+      ACanvas.ClipRect(ARect, TSkClipOp.Intersect, True);
+
+    PaintObj := TSkPaint.Create;
+    PaintObj.AlphaF := AOpacity;
+    ACanvas.SaveLayer(ARect, PaintObj, BlurFilter);
+    ACanvas.Restore;
+  finally
+    ACanvas.RestoreToCount(SaveCount);
+  end;
+end;
+
+procedure TFluentBlurEffect.PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single);
+begin
+  // Pure Skia effect; no FMX TBlurEffect fallback
 end;
 
 function TFluentBlurEffect.Clone: IMotionEffect;

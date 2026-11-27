@@ -68,8 +68,12 @@ type
     procedure ShimmerText(const ADurationMs: Cardinal = 1000; const ADirection: TShimmerDirection = TShimmerDirection.LeftToRight; const AAngleDeg: Single = 20.0); overload;
     procedure ShimmerText(const ADirection: TShimmerDirection; const ADurationMs: Cardinal = 1000; const AAngleDeg: Single = 20.0); overload;
     procedure ShimmerText(const AHighlightColor: TAlphaColor; const ADurationMs: Cardinal; const ADirection: TShimmerDirection = TShimmerDirection.LeftToRight; const AAngleDeg: Single = 20.0); overload;
-    procedure LiquidGlass(const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ADurationMs: Cardinal = 2000); overload;
-    procedure LiquidGlass(const ARefrMagnitude: Single; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 2000); overload;
+    procedure Glass(const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ADurationMs: Cardinal = 2000); overload;
+    procedure Glass(const ARefrMagnitude: Single; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 2000); overload;
+    procedure LiquidGlass(const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ADurationMs: Cardinal = 0); overload;
+    procedure LiquidGlass(const ARefrMagnitude: Single; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 0); overload;
+    procedure LiquidGlassGroup(const ATargets: TArray<TControl>; const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ASmoothness: Single = 18.0; const ADurationMs: Cardinal = 0); overload;
+    procedure LiquidGlassGroup(const ATargets: TArray<TControl>; const ASmoothness, ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal = 0); overload;
     procedure FrostedGlass(const ATintColor: TAlphaColor = $40FFFFFF; const ABorderLight: Single = 0.8; const ADurationMs: Cardinal = 500);
   end;
 
@@ -93,8 +97,10 @@ type
     procedure Mica(const AAltTabbed: Boolean = False; const AKeepActive: Boolean = True);
     procedure DisableBackdrop;
     procedure HideTitleBar;
-    procedure LiquidGlass(const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ADurationMs: Cardinal = 2000); overload;
-    procedure LiquidGlass(const ARefrMagnitude: Single; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 2000); overload;
+    procedure Glass(const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ADurationMs: Cardinal = 2000); overload;
+    procedure Glass(const ARefrMagnitude: Single; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 2000); overload;
+    procedure LiquidGlass(const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ADurationMs: Cardinal = 0); overload;
+    procedure LiquidGlass(const ARefrMagnitude: Single; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 0); overload;
     procedure FrostedGlass(const ATintColor: TAlphaColor = $40FFFFFF; const ABorderLight: Single = 0.8; const ADurationMs: Cardinal = 500);
   end;
 
@@ -338,6 +344,16 @@ begin
   Motion.ShimmerText(AHighlightColor, ADurationMs, ADirection, AAngleDeg).Start;
 end;
 
+procedure TFluentMotionControlHelper.Glass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal);
+begin
+  Motion.Glass(AStyle, ADurationMs).Start;
+end;
+
+procedure TFluentMotionControlHelper.Glass(const ARefrMagnitude: Single; const AAberration: Single; const ABlurRadius: Single; const AGlowIntensity: Single; const ADurationMs: Cardinal);
+begin
+  Motion.Glass(ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity, ADurationMs).Start;
+end;
+
 procedure TFluentMotionControlHelper.LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal);
 begin
   Motion.LiquidGlass(AStyle, ADurationMs).Start;
@@ -346,6 +362,16 @@ end;
 procedure TFluentMotionControlHelper.LiquidGlass(const ARefrMagnitude: Single; const AAberration: Single; const ABlurRadius: Single; const AGlowIntensity: Single; const ADurationMs: Cardinal);
 begin
   Motion.LiquidGlass(ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity, ADurationMs).Start;
+end;
+
+procedure TFluentMotionControlHelper.LiquidGlassGroup(const ATargets: TArray<TControl>; const AStyle: TFluentGlassStyle; const ASmoothness: Single; const ADurationMs: Cardinal);
+begin
+  Motion.LiquidGlassGroup(ATargets, AStyle, ASmoothness, ADurationMs).Start;
+end;
+
+procedure TFluentMotionControlHelper.LiquidGlassGroup(const ATargets: TArray<TControl>; const ASmoothness, ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal);
+begin
+  Motion.LiquidGlassGroup(ATargets, ASmoothness, ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity, ADurationMs).Start;
 end;
 
 procedure TFluentMotionControlHelper.FrostedGlass(const ATintColor: TAlphaColor; const ABorderLight: Single; const ADurationMs: Cardinal);
@@ -438,6 +464,70 @@ end;
 procedure TFluentMotionFormHelper.HideTitleBar;
 begin
   TFluentMotionFormDriver.GetOrCreate(Self).HideTitleBar;
+end;
+
+procedure TFluentMotionFormHelper.Glass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal);
+var
+  LRect: TRectangle;
+  I: Integer;
+begin
+  Acrylic($30202020);
+
+  LRect := nil;
+  for I := 0 to ChildrenCount - 1 do
+  begin
+    if (Children[I] is TRectangle) and (TRectangle(Children[I]).Name = '__FluentGlassBackdrop') then
+    begin
+      LRect := TRectangle(Children[I]);
+      Break;
+    end;
+  end;
+
+  if not Assigned(LRect) then
+  begin
+    LRect := TRectangle.Create(Self);
+    LRect.Name := '__FluentGlassBackdrop';
+    LRect.Parent := Self;
+    LRect.Align := TAlignLayout.Contents;
+    LRect.HitTest := False;
+    LRect.Stroke.Kind := TBrushKind.None;
+    LRect.Fill.Color := $10FFFFFF;
+    LRect.SendToBack;
+  end;
+
+  LRect.Motion.Glass(AStyle, ADurationMs).Start;
+end;
+
+procedure TFluentMotionFormHelper.Glass(const ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal);
+var
+  LRect: TRectangle;
+  I: Integer;
+begin
+  Acrylic($30202020);
+
+  LRect := nil;
+  for I := 0 to ChildrenCount - 1 do
+  begin
+    if (Children[I] is TRectangle) and (TRectangle(Children[I]).Name = '__FluentGlassBackdrop') then
+    begin
+      LRect := TRectangle(Children[I]);
+      Break;
+    end;
+  end;
+
+  if not Assigned(LRect) then
+  begin
+    LRect := TRectangle.Create(Self);
+    LRect.Name := '__FluentGlassBackdrop';
+    LRect.Parent := Self;
+    LRect.Align := TAlignLayout.Contents;
+    LRect.HitTest := False;
+    LRect.Stroke.Kind := TBrushKind.None;
+    LRect.Fill.Color := $10FFFFFF;
+    LRect.SendToBack;
+  end;
+
+  LRect.Motion.Glass(ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity, ADurationMs).Start;
 end;
 
 procedure TFluentMotionFormHelper.LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal);

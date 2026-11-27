@@ -154,7 +154,9 @@ CardProfile.Motion
 
 | المؤثر (Shader Modifier) | الاستدعاء البرمجي | التأثير البصري |
 | :--- | :--- | :--- |
-| **`LiquidGlass`** | `.LiquidGlass(Style, Duration)` | زجاج سائل فيزيائي يكسر بكسلات الخلفية الحية مع تشتت أطياف ضوئية وتوهج حواف. |
+| **`Glass`** | `.Glass(Style, Duration)` | زجاج بصري ثابت بنمط Apple يجمع بين Gaussian Blur والانكسار العدسي والتشتت اللوني ولمعان الحواف. |
+| **`LiquidGlass`** | `.LiquidGlass(Style, Duration)` | زجاج سائل حي ومتحرك بتموجات سطحية عضوية وتفاعل عدسي مع المؤشر/اللمس (`Duration = 0` للاستمرار). |
+| **`LiquidGlassGroup`** | `.LiquidGlassGroup(Targets, Style, Smoothness, Duration)` | دمج عضوي (SDF Smooth-Union) لعدة عناصر متجاورة (حتى 8) لتندمج حوافها مثل قطرات الماء. |
 | **`MeshGradient`** | `.MeshGradient(C1, C2, C3, C4, Duration)` | شبكة لونية هلامية متموجة ونابضة بالحياة عبر 4 نقاط زوايا. |
 | **`BorderBeam`** | `.BorderBeam(ColorFrom, ColorTo, Width, Length, Duration)` | شعاع ليزري ناعم يدور باستمرار حول إطار العنصر بانحناء الزوايا. |
 | **`LiquidWave`** | `.LiquidWave(TargetLevel, Color, CrestColor, Duration)` | محاكاة امتلاء السوائل والأمواج البحرية داخل البطاقات ومؤشرات القياس. |
@@ -168,12 +170,16 @@ CardProfile.Motion
 <!-- IMAGE_PLACEHOLDER: SkSL Shaders Showcase GIF (Liquid Glass Refraction, BorderBeam, MeshGradient, LiquidWave) -->
 ![SkSL Shaders Showcase](docs/images/shaders-showcase.gif)
 
-#### مثال: زجاج الماك السائل مع انكسار الخلفية الحية (Live Backdrop Refraction)
+#### مثال: زجاج Apple السائل ودمج القطرات (Live Backdrop Refraction & Merging)
 ```pascal
-GlassCard.Motion
-  .LiquidGlass(TFluentGlassStyle.ClearLiquid, 2000)
-  .RepeatForever(True) // تكرار بحركة تنفس هادئة
-  .Start;
+// زجاج بصري ثابت (يتوقف عن التحديث بعد انتهاء المدة)
+GlassCard.Glass(TFluentGlassStyle.Frosted);
+
+// زجاج سائل حي مستمر يتفاعل مع المؤشر
+LiquidCard.LiquidGlass(TFluentGlassStyle.ClearLiquid);
+
+// دمج دائرتين أو عدة عناصر كقطرات ماء زجاجية داخل حاوية
+Layout1.LiquidGlassGroup([Circle1, Circle2], TFluentGlassStyle.Frosted, 18.0);
 ```
 
 #### أنماط الزجاج المتوفرة في `TFluentGlassStyle`:

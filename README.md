@@ -150,7 +150,9 @@ CardProfile.Motion
 
 | Shader Modifier | Method Signature | Visual Effect |
 | :--- | :--- | :--- |
-| **`LiquidGlass`** | `.LiquidGlass(Style, Duration)` | Physical liquid glass refracting underlying scene pixels with chromatic aberration and edge highlights. |
+| **`Glass`** | `.Glass(Style, Duration)` | Static Apple-style optical glass with hardware Gaussian blur, convex edge refraction, RGB dispersion, and 3D specular rim. |
+| **`LiquidGlass`** | `.LiquidGlass(Style, Duration)` | Dynamic animated fluid glass with organic edge waves, surface ripples, and interactive cursor/touch lensing (`Duration = 0` for continuous). |
+| **`LiquidGlassGroup`** | `.LiquidGlassGroup(Targets, Style, Smoothness, Duration)` | SDF Smooth-Union metaball merging of multiple child controls (up to 8) into liquid glass droplets. |
 | **`MeshGradient`** | `.MeshGradient(C1, C2, C3, C4, Duration)` | Dynamic 4-point organic fluid gradient mesh morphing across time. |
 | **`BorderBeam`** | `.BorderBeam(ColorFrom, ColorTo, Width, Length, Duration)` | Glowing neon laser beam racing along control borders respecting corner radius. |
 | **`LiquidWave`** | `.LiquidWave(TargetLevel, Color, CrestColor, Duration)` | Realistic sine wave liquid fill for gauges and battery meters. |
@@ -164,12 +166,16 @@ CardProfile.Motion
 <!-- IMAGE_PLACEHOLDER: SkSL Shaders Showcase GIF (Liquid Glass Refraction, BorderBeam, MeshGradient, LiquidWave) -->
 ![SkSL Shaders Showcase](docs/images/shaders-showcase.gif)
 
-#### Liquid Glass Example (Authentic Backdrop Pixel Refraction):
+#### Liquid Glass & Droplet Merging Example (Authentic Apple Liquid Glass):
 ```pascal
-GlassCard.Motion
-  .LiquidGlass(TFluentGlassStyle.ClearLiquid, 2000)
-  .RepeatForever(True) // Subtle breathing loop
-  .Start;
+// Static optical glass card
+GlassCard.Glass(TFluentGlassStyle.Frosted);
+
+// Continuous fluid Apple Liquid Glass
+LiquidCard.LiquidGlass(TFluentGlassStyle.ClearLiquid);
+
+// Merging multiple circles/controls into liquid glass droplets on a parent container
+Layout1.LiquidGlassGroup([Circle1, Circle2], TFluentGlassStyle.Frosted, 18.0);
 ```
 
 #### Available Glass Styles (`TFluentGlassStyle`):

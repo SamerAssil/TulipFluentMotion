@@ -5,38 +5,54 @@ interface
 uses
   System.SysUtils,
   System.Classes,
+  System.Types,
   System.Math,
   System.UITypes,
+  System.Generics.Collections,
+  System.Skia,
   FMX.Types,
   FMX.Controls,
-  FMX.Effects,
+  FMX.Objects,
+  FMX.Graphics,
   Tulip.FluentMotion.Types,
   Tulip.FluentMotion.Interfaces,
-  Tulip.FluentMotion.Effect.Base;
+  Tulip.FluentMotion.Effect.Shader;
 
 type
-  { Shadow / Elevation Effect: Smoothly animates depth, softness, and opacity using FMX TShadowEffect }
-  TFluentShadowEffect = class(TFluentMotionEffectBase)
+  { Shadow / Elevation Effect: Smoothly animates depth, softness, and opacity using Skia TSkMaskFilter.MakeBlur }
+  TFluentShadowEffect = class(TFluentShaderEffect)
   private
-    FShadowComponent: TShadowEffect;
+    type
+      TShadowState = record
+        Distance: Single;
+        Softness: Single;
+        Opacity: Single;
+      end;
+    class var FControlStates: TDictionary<TControl, TShadowState>;
+    class constructor CreateClass;
+    class destructor DestroyClass;
+  private
     FFromDistance: Single;
     FTargetDistance: Single;
     FStartDistance: Single;
     FInitialDistance: Single;
+    FCurrentDistance: Single;
 
     FFromSoftness: Single;
     FTargetSoftness: Single;
     FStartSoftness: Single;
     FInitialSoftness: Single;
+    FCurrentSoftness: Single;
 
     FFromOpacity: Single;
     FTargetOpacity: Single;
     FStartOpacity: Single;
     FInitialOpacity: Single;
+    FCurrentOpacity: Single;
 
     FShadowColor: TAlphaColor;
     FAutoCapture: Boolean;
-    function GetOrCreateShadowComponent: TShadowEffect;
+    procedure SaveControlState(const ADistance, ASoftness, AOpacity: Single);
   protected
     procedure DoAttach; override;
     procedure DoStart; override;
@@ -48,6 +64,9 @@ type
     constructor Create(const AFromDistance, ATargetDistance, AFromSoftness, ATargetSoftness, AFromOpacity, ATargetOpacity: Single; const ADurationMs: Cardinal = 250); reintroduce; overload;
 
     class function MakeElevation(const AElevationLevel: Single; const ADurationMs: Cardinal = 250): TFluentShadowEffect; static;
+
+    procedure Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single); override;
+    procedure PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single); override;
 
     function Clone: IMotionEffect; override;
 
@@ -61,15 +80,34 @@ implementation
 
 { TFluentShadowEffect }
 
+class constructor TFluentShadowEffect.CreateClass;
+begin
+  FControlStates := TDictionary<TControl, TShadowState>.Create;
+end;
+
+class destructor TFluentShadowEffect.DestroyClass;
+begin
+  FreeAndNil(FControlStates);
+end;
+
 constructor TFluentShadowEffect.Create(const ATargetDistance, ATargetSoftness, ATargetOpacity: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(ADurationMs);
+  inherited Create('', ADurationMs, TShaderDrawMode.Background);
   FTargetDistance := Max(0.0, ATargetDistance);
   FTargetSoftness := EnsureRange(ATargetSoftness, 0.0, 1.0);
   FTargetOpacity := EnsureRange(ATargetOpacity, 0.0, 1.0);
   FFromDistance := 0.0;
   FFromSoftness := 0.0;
   FFromOpacity := 0.0;
+  FStartDistance := 0.0;
+  FStartSoftness := 0.0;
+  FStartOpacity := 0.0;
+  FInitialDistance := 0.0;
+  FInitialSoftness := 0.0;
+  FInitialOpacity := 0.0;
+  FCurrentDistance := 0.0;
+  FCurrentSoftness := 0.0;
+  FCurrentOpacity := 0.0;
   FShadowColor := $80000000;
   FAutoCapture := True;
   FEase := TFluentEase.OutCubic;
@@ -77,13 +115,22 @@ end;
 
 constructor TFluentShadowEffect.Create(const AFromDistance, ATargetDistance, AFromSoftness, ATargetSoftness, AFromOpacity, ATargetOpacity: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(ADurationMs);
+  inherited Create('', ADurationMs, TShaderDrawMode.Background);
   FFromDistance := Max(0.0, AFromDistance);
   FTargetDistance := Max(0.0, ATargetDistance);
   FFromSoftness := EnsureRange(AFromSoftness, 0.0, 1.0);
   FTargetSoftness := EnsureRange(ATargetSoftness, 0.0, 1.0);
   FFromOpacity := EnsureRange(AFromOpacity, 0.0, 1.0);
   FTargetOpacity := EnsureRange(ATargetOpacity, 0.0, 1.0);
+  FStartDistance := FFromDistance;
+  FStartSoftness := FFromSoftness;
+  FStartOpacity := FFromOpacity;
+  FInitialDistance := FFromDistance;
+  FInitialSoftness := FFromSoftness;
+  FInitialOpacity := FFromOpacity;
+  FCurrentDistance := FFromDistance;
+  FCurrentSoftness := FFromSoftness;
+  FCurrentOpacity := FFromOpacity;
   FShadowColor := $80000000;
   FAutoCapture := False;
   FEase := TFluentEase.OutCubic;
@@ -113,130 +160,137 @@ begin
   Result := TFluentShadowEffect.Create(Dist, Soft, Opac, ADurationMs);
 end;
 
-function TFluentShadowEffect.GetOrCreateShadowComponent: TShadowEffect;
+procedure TFluentShadowEffect.SaveControlState(const ADistance, ASoftness, AOpacity: Single);
 var
-  I: Integer;
+  State: TShadowState;
 begin
-  if not Assigned(FControl) then
-    Exit(nil);
+  if not Assigned(FControl) or not Assigned(FControlStates) then
+    Exit;
 
-  for I := 0 to FControl.ChildrenCount - 1 do
+  if (ADistance <= 0.01) or (AOpacity <= 0.01) then
+    FControlStates.Remove(FControl)
+  else
   begin
-    if FControl.Children[I] is TShadowEffect then
-    begin
-      FShadowComponent := TShadowEffect(FControl.Children[I]);
-      Exit(FShadowComponent);
-    end;
+    State.Distance := ADistance;
+    State.Softness := ASoftness;
+    State.Opacity := AOpacity;
+    FControlStates.AddOrSetValue(FControl, State);
   end;
-
-  FShadowComponent := TShadowEffect.Create(FControl);
-  FShadowComponent.Stored := False;
-  FShadowComponent.Parent := FControl;
-  FShadowComponent.Enabled := False;
-  FShadowComponent.Distance := 0.0;
-  FShadowComponent.Softness := 0.0;
-  FShadowComponent.Opacity := 0.0;
-  FShadowComponent.Direction := 90.0;
-  FShadowComponent.ShadowColor := FShadowColor;
-  Result := FShadowComponent;
 end;
 
 procedure TFluentShadowEffect.DoAttach;
+var
+  State: TShadowState;
 begin
-  GetOrCreateShadowComponent;
-  if Assigned(FShadowComponent) then
+  inherited DoAttach;
+  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
   begin
-    if FShadowComponent.Enabled then
-    begin
-      FInitialDistance := FShadowComponent.Distance;
-      FInitialSoftness := FShadowComponent.Softness;
-      FInitialOpacity := FShadowComponent.Opacity;
-    end
-    else
-    begin
-      FInitialDistance := 0.0;
-      FInitialSoftness := 0.0;
-      FInitialOpacity := 0.0;
-    end;
-
-    if FAutoCapture then
-    begin
-      FFromDistance := FInitialDistance;
-      FFromSoftness := FInitialSoftness;
-      FFromOpacity := FInitialOpacity;
-    end;
+    FInitialDistance := State.Distance;
+    FInitialSoftness := State.Softness;
+    FInitialOpacity := State.Opacity;
+    FFromDistance := FInitialDistance;
+    FFromSoftness := FInitialSoftness;
+    FFromOpacity := FInitialOpacity;
   end;
 end;
 
 procedure TFluentShadowEffect.DoStart;
+var
+  State: TShadowState;
 begin
-  GetOrCreateShadowComponent;
-  if Assigned(FShadowComponent) then
+  inherited DoStart;
+  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
   begin
-    if FAutoCapture then
-    begin
-      if FShadowComponent.Enabled then
-      begin
-        FStartDistance := FShadowComponent.Distance;
-        FStartSoftness := FShadowComponent.Softness;
-        FStartOpacity := FShadowComponent.Opacity;
-      end
-      else
-      begin
-        FStartDistance := 0.0;
-        FStartSoftness := 0.0;
-        FStartOpacity := 0.0;
-      end;
-    end
-    else
-    begin
-      FStartDistance := FFromDistance;
-      FStartSoftness := FFromSoftness;
-      FStartOpacity := FFromOpacity;
-    end;
-
-    if (FStartDistance > 0.01) or (FTargetDistance > 0.01) or (FTargetOpacity > 0.01) then
-      FShadowComponent.Enabled := True;
+    FStartDistance := State.Distance;
+    FStartSoftness := State.Softness;
+    FStartOpacity := State.Opacity;
+  end
+  else
+  begin
+    FStartDistance := FFromDistance;
+    FStartSoftness := FFromSoftness;
+    FStartOpacity := FFromOpacity;
   end;
+
+  FCurrentDistance := FStartDistance;
+  FCurrentSoftness := FStartSoftness;
+  FCurrentOpacity := FStartOpacity;
+  SaveControlState(FCurrentDistance, FCurrentSoftness, FCurrentOpacity);
 end;
 
 procedure TFluentShadowEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
-var
-  CurDist, CurSoft, CurOpac: Single;
 begin
-  if not Assigned(FShadowComponent) then
-    Exit;
-
-  CurDist := Max(0.0, FStartDistance + (FTargetDistance - FStartDistance) * AProgress);
-  CurSoft := EnsureRange(FStartSoftness + (FTargetSoftness - FStartSoftness) * AProgress, 0.0, 1.0);
-  CurOpac := EnsureRange(FStartOpacity + (FTargetOpacity - FStartOpacity) * AProgress, 0.0, 1.0);
-
-  FShadowComponent.Distance := CurDist;
-  FShadowComponent.Softness := CurSoft;
-  FShadowComponent.Opacity := CurOpac;
-  FShadowComponent.Enabled := (CurDist > 0.01) and (CurOpac > 0.01);
+  FCurrentDistance := Max(0.0, FStartDistance + (FTargetDistance - FStartDistance) * AProgress);
+  FCurrentSoftness := EnsureRange(FStartSoftness + (FTargetSoftness - FStartSoftness) * AProgress, 0.0, 1.0);
+  FCurrentOpacity := EnsureRange(FStartOpacity + (FTargetOpacity - FStartOpacity) * AProgress, 0.0, 1.0);
+  SaveControlState(FCurrentDistance, FCurrentSoftness, FCurrentOpacity);
 end;
 
 procedure TFluentShadowEffect.DoFinish;
 begin
-  if Assigned(FShadowComponent) then
-  begin
-    FShadowComponent.Distance := FTargetDistance;
-    FShadowComponent.Softness := FTargetSoftness;
-    FShadowComponent.Opacity := FTargetOpacity;
-    FShadowComponent.Enabled := (FTargetDistance > 0.01) and (FTargetOpacity > 0.01);
-  end;
+  FCurrentDistance := FTargetDistance;
+  FCurrentSoftness := FTargetSoftness;
+  FCurrentOpacity := FTargetOpacity;
+  SaveControlState(FCurrentDistance, FCurrentSoftness, FCurrentOpacity);
 end;
 
 procedure TFluentShadowEffect.DoReset;
 begin
-  if Assigned(FShadowComponent) then
-  begin
-    FShadowComponent.Distance := FInitialDistance;
-    FShadowComponent.Softness := FInitialSoftness;
-    FShadowComponent.Opacity := FInitialOpacity;
-    FShadowComponent.Enabled := (FInitialDistance > 0.01) and (FInitialOpacity > 0.01);
+  FCurrentDistance := FInitialDistance;
+  FCurrentSoftness := FInitialSoftness;
+  FCurrentOpacity := FInitialOpacity;
+  SaveControlState(FCurrentDistance, FCurrentSoftness, FCurrentOpacity);
+end;
+
+procedure TFluentShadowEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);
+var
+  Sigma, CornerRadius, FinalAlpha: Single;
+  ShadowRect: TRectF;
+  PaintObj: ISkPaint;
+  SaveCount: Integer;
+begin
+  if (not Assigned(ACanvas)) or (FCurrentDistance <= 0.01) or (FCurrentOpacity <= 0.01) then
+    Exit;
+
+  Sigma := Max(0.5, FCurrentSoftness * 16.0);
+  FinalAlpha := EnsureRange(FCurrentOpacity * AOpacity, 0.0, 1.0);
+  CornerRadius := ExtractCornerRadius;
+
+  ShadowRect := ARect;
+  ShadowRect.Offset(0, FCurrentDistance);
+
+  PaintObj := TSkPaint.Create;
+  PaintObj.Color := FShadowColor;
+  PaintObj.AlphaF := FinalAlpha;
+  PaintObj.AntiAlias := True;
+  PaintObj.MaskFilter := TSkMaskFilter.MakeBlur(TSkBlurStyle.Normal, Sigma);
+
+  SaveCount := ACanvas.Save;
+  try
+    // Exclude control interior so drop shadow renders strictly around/beneath the control
+    if CornerRadius > 0.5 then
+    begin
+      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Difference, True);
+      ACanvas.DrawRoundRect(ShadowRect, CornerRadius, CornerRadius, PaintObj);
+    end
+    else if Assigned(FControl) and (FControl is TCircle) then
+    begin
+      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5), TSkClipOp.Difference, True);
+      ACanvas.DrawOval(ShadowRect, PaintObj);
+    end
+    else
+    begin
+      ACanvas.ClipRect(ARect, TSkClipOp.Difference, True);
+      ACanvas.DrawRect(ShadowRect, PaintObj);
+    end;
+  finally
+    ACanvas.RestoreToCount(SaveCount);
   end;
+end;
+
+procedure TFluentShadowEffect.PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single);
+begin
+  // Pure Skia effect; no FMX TShadowEffect fallback
 end;
 
 function TFluentShadowEffect.Clone: IMotionEffect;

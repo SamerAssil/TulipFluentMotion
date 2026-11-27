@@ -351,21 +351,43 @@ function PopOut(const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor 
 <!-- IMAGE_PLACEHOLDER: All 9 SkSL Shaders Showcase GIF Matrix -->
 ![SkSL Shaders Matrix](docs/images/sksl-matrix.gif)
 
-### 1. مؤثر الزجاج السائل (Liquid Glass)
-يحاكي زجاج واجهات Apple الحديثة عبر كسر بكسلات المشهد الواقعة خلف العنصر مباشرة (`Backdrop Refraction`)، مع تشتت لوني للأطياف الضوئية (RGB Chromatic Dispersion)، وضبابية زجاجية متجانسة وتوهج حواف عاكسة:
+### 1. الزجاج البصري والزجاج السائل ودمج الأجسام (`Glass`, `LiquidGlass`, `LiquidGlassGroup`)
+يحاكي زجاج Apple Liquid Glass عبر دمج تمريرتين على الـ GPU: تضبيب Gaussian حقيقي (`TSkImageFilter.MakeBlur`) متبوعاً بشيدر SkSL للانكسار العدسي والتشتت اللوني للأطياف RGB ولمعان الحواف ثلاثي الأبعاد والتفاعل مع المؤشر:
 
 ```pascal
-// أ. الاستخدام عبر الأنماط الجاهزة (Presets):
-function LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
+// أ. الزجاج البصري الثابت (يتوقف عن التحديث بعد انتهاء المدة):
+function Glass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
+function Glass(
+  const ARefrMagnitude: Single = 14.0;
+  const AAberration: Single = 0.08;
+  const ABlurRadius: Single = 0.8;
+  const AGlowIntensity: Single = 0.40;
+  const ADurationMs: Cardinal = 2000
+): IMotionBuilder; overload;
 
-// ب. الاستخدام بالضبط الفيزيائي الدقيق:
+// ب. الزجاج السائل الحي (ADurationMs = 0 للاستمرار الدائم):
+function LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 0): IMotionBuilder; overload;
 function LiquidGlass(
   const ARefrMagnitude: Single = 14.0; // قوة إزاحة وانكسار الضوء
   const AAberration: Single = 0.08;   // التشتت اللوني للأطياف
-  const ABlurRadius: Single = 0.8;    // نصف قطر ضبابية الزجاج
+  const ABlurRadius: Single = 0.8;    // معامل ضبابية الزجاج
   const AGlowIntensity: Single = 0.40; // شدة لمعان الحواف العاكسة
-  const ADurationMs: Cardinal = 2000
+  const ADurationMs: Cardinal = 0
 ): IMotionBuilder; overload;
+
+// ج. دمج عدة عناصر عضوياً كقطرات ماء زجاجية (حتى 8 عناصر):
+function LiquidGlassGroup(
+  const ATargets: TArray<TControl>;
+  const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted;
+  const ASmoothness: Single = 18.0;   // مدى الجسر السائل k بين الأجسام
+  const ADurationMs: Cardinal = 0
+): IMotionBuilder; overload;
+```
+
+```pascal
+// دمج دائرتين شفافتين كقطرات ماء زجاجية داخل Layout1:
+Layout1.LiquidGlassGroup([Circle1, Circle2], TFluentGlassStyle.Frosted, 18.0);
+Circle1.Motion.MoveTo(Circle2.Position.X - 15, Circle2.Position.Y, 800).Start;
 ```
 
 #### أنماط `TFluentGlassStyle`:

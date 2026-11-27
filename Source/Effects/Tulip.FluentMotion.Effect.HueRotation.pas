@@ -5,26 +5,50 @@ interface
 uses
   System.SysUtils,
   System.Classes,
+  System.Types,
   System.Math,
+  System.Generics.Collections,
+  System.Skia,
   FMX.Types,
   FMX.Controls,
-  FMX.Filter.Effects,
+  FMX.Graphics,
   Tulip.FluentMotion.Types,
   Tulip.FluentMotion.Interfaces,
-  Tulip.FluentMotion.Effect.Base;
+  Tulip.FluentMotion.Effect.Shader;
 
 type
-  { Hue Rotation Effect: Smoothly rotates color spectrum (SwiftUI .hueRotation) }
-  TFluentHueRotationEffect = class(TFluentMotionEffectBase)
+  { Hue Rotation Effect: Smoothly rotates color spectrum via SkSL (SwiftUI .hueRotation) }
+  TFluentHueRotationEffect = class(TFluentShaderEffect)
   private
-    FHueComponent: THueAdjustEffect;
+    const HUE_ROTATION_SKSL =
+      'uniform shader image;' + sLineBreak +
+      'uniform float uAngleRad;' + sLineBreak +
+      'half4 main(vec2 fragCoord) {' + sLineBreak +
+      '    half4 c = image.eval(fragCoord);' + sLineBreak +
+      '    float cosA = cos(uAngleRad);' + sLineBreak +
+      '    float sinA = sin(uAngleRad);' + sLineBreak +
+      '    float k = 0.213;' + sLineBreak +
+      '    float l = 0.715;' + sLineBreak +
+      '    float m = 0.072;' + sLineBreak +
+      '    half3 rRow = half3(k + cosA * (1.0 - k) + sinA * (-k), l + cosA * (-l) + sinA * (-l), m + cosA * (-m) + sinA * (1.0 - m));' + sLineBreak +
+      '    half3 gRow = half3(k + cosA * (-k) + sinA * 0.143, l + cosA * (1.0 - l) + sinA * 0.140, m + cosA * (-m) + sinA * (-0.283));' + sLineBreak +
+      '    half3 bRow = half3(k + cosA * (-k) + sinA * (-(1.0 - k)), l + cosA * (-l) + sinA * l, m + cosA * (1.0 - m) + sinA * m);' + sLineBreak +
+      '    half3 rotated = half3(dot(c.rgb, rRow), dot(c.rgb, gRow), dot(c.rgb, bRow));' + sLineBreak +
+      '    return half4(clamp(rotated, half3(0.0), half3(c.a)), c.a);' + sLineBreak +
+      '}';
+  private
+    class var FControlAngles: TDictionary<TControl, Single>;
+    class constructor CreateClass;
+    class destructor DestroyClass;
+  private
     FFromAngleDeg: Single;
     FTargetAngleDeg: Single;
     FStartAngleDeg: Single;
     FInitialAngleDeg: Single;
+    FCurrentAngleDeg: Single;
     FAutoCapture: Boolean;
-    function GetOrCreateHueComponent: THueAdjustEffect;
   protected
+    procedure ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single); override;
     procedure DoAttach; override;
     procedure DoStart; override;
     procedure DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single); override;
@@ -34,128 +58,134 @@ type
     constructor Create(const ATargetAngleDeg: Single = 360.0; const ADurationMs: Cardinal = 500); reintroduce; overload;
     constructor Create(const AFromAngleDeg, ATargetAngleDeg: Single; const ADurationMs: Cardinal = 500); reintroduce; overload;
 
+    procedure Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single); override;
+    procedure PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single); override;
+
     function Clone: IMotionEffect; override;
+
+    class function GetCurrentAngleDeg(const AControl: TControl): Single; static;
 
     property TargetAngleDeg: Single read FTargetAngleDeg write FTargetAngleDeg;
     property FromAngleDeg: Single read FFromAngleDeg write FFromAngleDeg;
+    property CurrentAngleDeg: Single read FCurrentAngleDeg;
   end;
 
 implementation
 
 { TFluentHueRotationEffect }
 
+class constructor TFluentHueRotationEffect.CreateClass;
+begin
+  FControlAngles := TDictionary<TControl, Single>.Create;
+end;
+
+class destructor TFluentHueRotationEffect.DestroyClass;
+begin
+  FreeAndNil(FControlAngles);
+end;
+
+class function TFluentHueRotationEffect.GetCurrentAngleDeg(const AControl: TControl): Single;
+begin
+  Result := 0.0;
+  if Assigned(AControl) and Assigned(FControlAngles) then
+    FControlAngles.TryGetValue(AControl, Result);
+end;
+
 constructor TFluentHueRotationEffect.Create(const ATargetAngleDeg: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(ADurationMs);
+  inherited Create(HUE_ROTATION_SKSL, ADurationMs, TShaderDrawMode.Overlay);
   FTargetAngleDeg := ATargetAngleDeg;
   FFromAngleDeg := 0.0;
   FStartAngleDeg := 0.0;
   FInitialAngleDeg := 0.0;
+  FCurrentAngleDeg := 0.0;
   FAutoCapture := True;
   FEase := TFluentEase.Linear;
 end;
 
 constructor TFluentHueRotationEffect.Create(const AFromAngleDeg, ATargetAngleDeg: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(ADurationMs);
+  inherited Create(HUE_ROTATION_SKSL, ADurationMs, TShaderDrawMode.Overlay);
   FFromAngleDeg := AFromAngleDeg;
   FTargetAngleDeg := ATargetAngleDeg;
   FStartAngleDeg := AFromAngleDeg;
   FInitialAngleDeg := AFromAngleDeg;
+  FCurrentAngleDeg := AFromAngleDeg;
   FAutoCapture := False;
   FEase := TFluentEase.Linear;
 end;
 
-function TFluentHueRotationEffect.GetOrCreateHueComponent: THueAdjustEffect;
-var
-  I: Integer;
+procedure TFluentHueRotationEffect.ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single);
 begin
-  if not Assigned(FControl) then
-    Exit(nil);
-
-  for I := 0 to FControl.ChildrenCount - 1 do
-  begin
-    if FControl.Children[I] is THueAdjustEffect then
-    begin
-      FHueComponent := THueAdjustEffect(FControl.Children[I]);
-      Exit(FHueComponent);
-    end;
-  end;
-
-  FHueComponent := THueAdjustEffect.Create(FControl);
-  FHueComponent.Stored := False;
-  FHueComponent.Parent := FControl;
-  FHueComponent.Enabled := False;
-  FHueComponent.Hue := 0.0;
-  Result := FHueComponent;
+  inherited ApplyUniforms(ABuilder, ARect, AOpacity);
+  if Assigned(FEffect) and (FEffect.IndexOfUniform('uAngleRad') >= 0) then
+    ABuilder.SetUniform('uAngleRad', DegToRad(FCurrentAngleDeg));
 end;
 
 procedure TFluentHueRotationEffect.DoAttach;
 begin
-  GetOrCreateHueComponent;
-  if Assigned(FHueComponent) then
+  inherited DoAttach;
+  if FAutoCapture and Assigned(FControl) then
   begin
-    if FHueComponent.Enabled then
-      FInitialAngleDeg := (FHueComponent.Hue / (2.0 * Pi)) * 360.0
-    else
-      FInitialAngleDeg := 0.0;
-
-    if FAutoCapture then
-      FFromAngleDeg := FInitialAngleDeg;
+    FInitialAngleDeg := GetCurrentAngleDeg(FControl);
+    FFromAngleDeg := FInitialAngleDeg;
   end;
 end;
 
 procedure TFluentHueRotationEffect.DoStart;
 begin
-  GetOrCreateHueComponent;
-  if Assigned(FHueComponent) then
-  begin
-    if FAutoCapture then
-      FStartAngleDeg := FInitialAngleDeg
-    else
-      FStartAngleDeg := FFromAngleDeg;
+  inherited DoStart;
+  if FAutoCapture and Assigned(FControl) then
+    FStartAngleDeg := GetCurrentAngleDeg(FControl)
+  else
+    FStartAngleDeg := FFromAngleDeg;
 
-    FHueComponent.Enabled := True;
-  end;
+  FCurrentAngleDeg := FStartAngleDeg;
+  if Assigned(FControl) and Assigned(FControlAngles) then
+    FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
 end;
 
 procedure TFluentHueRotationEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
-var
-  CurAngleDeg: Single;
-  CurHueVal: Single;
 begin
-  if not Assigned(FHueComponent) then
-    Exit;
-
-  CurAngleDeg := FStartAngleDeg + (FTargetAngleDeg - FStartAngleDeg) * AProgress;
-  CurHueVal := (CurAngleDeg / 360.0) * (2.0 * Pi);
-
-  FHueComponent.Hue := CurHueVal;
-  FHueComponent.Enabled := (Abs(CurAngleDeg) > 0.01);
+  FCurrentAngleDeg := FStartAngleDeg + (FTargetAngleDeg - FStartAngleDeg) * AProgress;
+  if Assigned(FControl) and Assigned(FControlAngles) then
+    FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
 end;
 
 procedure TFluentHueRotationEffect.DoFinish;
-var
-  FinalHueVal: Single;
 begin
-  if Assigned(FHueComponent) then
+  FCurrentAngleDeg := FTargetAngleDeg;
+  if Assigned(FControl) and Assigned(FControlAngles) then
   begin
-    FinalHueVal := (FTargetAngleDeg / 360.0) * (2.0 * Pi);
-    FHueComponent.Hue := FinalHueVal;
-    FHueComponent.Enabled := (Abs(FTargetAngleDeg) > 0.01);
+    if Abs(FMod(FCurrentAngleDeg, 360.0)) <= 0.01 then
+      FControlAngles.Remove(FControl)
+    else
+      FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
   end;
 end;
 
 procedure TFluentHueRotationEffect.DoReset;
-var
-  InitHueVal: Single;
 begin
-  if Assigned(FHueComponent) then
+  FCurrentAngleDeg := FInitialAngleDeg;
+  if Assigned(FControl) and Assigned(FControlAngles) then
   begin
-    InitHueVal := (FInitialAngleDeg / 360.0) * (2.0 * Pi);
-    FHueComponent.Hue := InitHueVal;
-    FHueComponent.Enabled := (Abs(FInitialAngleDeg) > 0.01);
+    if Abs(FMod(FCurrentAngleDeg, 360.0)) <= 0.01 then
+      FControlAngles.Remove(FControl)
+    else
+      FControlAngles.AddOrSetValue(FControl, FCurrentAngleDeg);
   end;
+end;
+
+procedure TFluentHueRotationEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);
+begin
+  if Abs(FMod(FCurrentAngleDeg, 360.0)) <= 0.01 then
+    Exit;
+  inherited Paint(ACanvas, ARect, AOpacity);
+end;
+
+procedure TFluentHueRotationEffect.PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single);
+begin
+  // Pure Skia effect; no FMX THueAdjustEffect fallback
 end;
 
 function TFluentHueRotationEffect.Clone: IMotionEffect;

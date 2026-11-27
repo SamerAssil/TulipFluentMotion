@@ -348,21 +348,43 @@ Compiled directly to GPU bytecode using Skia Shading Language (`SkSL`):
 <!-- IMAGE_PLACEHOLDER: All 9 SkSL Shaders Showcase GIF Matrix -->
 ![SkSL Shaders Matrix](docs/images/sksl-matrix.gif)
 
-### 1. Liquid Glass (`LiquidGlass`)
-Emulates modern frosted acrylic and Apple visionOS glass by sampling and refracting underlying pixels (`Backdrop Refraction`), separating chromatic RGB spectrums, applying gaussian surface blur, and projecting rim specular reflections:
+### 1. Glass, Liquid Glass & Liquid Glass Group (`Glass`, `LiquidGlass`, `LiquidGlassGroup`)
+Emulates Apple Liquid Glass and macOS/visionOS optics using a two-pass hardware Gaussian blur (`TSkImageFilter.MakeBlur`) fed into a SkSL refraction shader (`Backdrop Refraction`), with RGB chromatic dispersion, 3D specular rim highlights, and interactive cursor/touch lensing:
 
 ```pascal
-// A. Using visual presets:
-function LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
+// A. Static optical glass (stops ticking once duration finishes):
+function Glass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 2000): IMotionBuilder; overload;
+function Glass(
+  const ARefrMagnitude: Single = 14.0;
+  const AAberration: Single = 0.08;
+  const ABlurRadius: Single = 0.8;
+  const AGlowIntensity: Single = 0.40;
+  const ADurationMs: Cardinal = 2000
+): IMotionBuilder; overload;
 
-// B. Precise physical optical configuration:
+// B. Dynamic fluid Liquid Glass (ADurationMs = 0 runs continuously):
+function LiquidGlass(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 0): IMotionBuilder; overload;
 function LiquidGlass(
   const ARefrMagnitude: Single = 14.0; // Refraction displacement intensity
   const AAberration: Single = 0.08;   // Lateral chromatic dispersion (RGB Split)
-  const ABlurRadius: Single = 0.8;    // Frosted sampling radius
+  const ABlurRadius: Single = 0.8;    // Hardware Gaussian blur factor
   const AGlowIntensity: Single = 0.40; // Specular rim reflection intensity
-  const ADurationMs: Cardinal = 2000
+  const ADurationMs: Cardinal = 0
 ): IMotionBuilder; overload;
+
+// C. Organic SDF Smooth-Union merging of multiple child controls (up to 8):
+function LiquidGlassGroup(
+  const ATargets: TArray<TControl>;
+  const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted;
+  const ASmoothness: Single = 18.0;   // Smooth-union bridge radius k
+  const ADurationMs: Cardinal = 0
+): IMotionBuilder; overload;
+```
+
+```pascal
+// Merging two transparent circles into liquid water droplets inside Layout1:
+Layout1.LiquidGlassGroup([Circle1, Circle2], TFluentGlassStyle.Frosted, 18.0);
+Circle1.Motion.MoveTo(Circle2.Position.X - 15, Circle2.Position.Y, 800).Start;
 ```
 
 #### Available Styles (`TFluentGlassStyle`):

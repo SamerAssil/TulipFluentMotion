@@ -50,6 +50,7 @@ type
     FCompileError: string;
 
     function GetOrCreateEffect(const ASkSL: string): ISkRuntimeEffect;
+    function GetBackdropInputFilter: ISkImageFilter; virtual;
     procedure ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single); virtual;
     function ExtractCornerRadius: Single;
     procedure DoAttach; override;
@@ -340,14 +341,12 @@ type
     constructor Create(const ABlobColor: TAlphaColor = $DDFF007F; const ASpeed: Single = 2.0; const ADurationMs: Cardinal = 3000); reintroduce;
   end;
 
-  { Preset 9: Liquid Glass (macOS / Dynamic Island optics: Back-surface Refraction, Gaussian Blur & Chromatic Aberration) }
-  TFluentLiquidGlassEffect = class(TFluentShaderEffect)
+  { Preset 9: Glass (Static Apple-style optical glass: hardware Gaussian blur + edge refraction, chromatic aberration & 3D specular rim) }
+  TFluentGlassEffect = class(TFluentShaderEffect)
   private
     FBlurRadius: Single;
     FGlowIntensity: Single;
-    const LIQUID_GLASS_SKSL =
-      'const float GLOW_SPREAD = 0.1;' + sLineBreak +
-      'const vec3  GLOW_COLOR = vec3(0.0, 0.0, 0.0);' + sLineBreak +
+    const GLASS_SKSL =
       'uniform shader image;' + sLineBreak +
       'uniform float time;' + sLineBreak +
       'uniform vec2 resolution;' + sLineBreak +
@@ -359,59 +358,210 @@ type
       'uniform float uBlurRadius;' + sLineBreak +
       'uniform float uGlowIntensity;' + sLineBreak +
       'float sdRoundedBox(vec2 p, vec2 b, float r) {' + sLineBreak +
-      '  vec2 d = abs(p) - b;' + sLineBreak +
+      '  vec2 d = abs(p) - b + r;' + sLineBreak +
       '  return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;' + sLineBreak +
       '}' + sLineBreak +
-      'vec3 sampleFrostedGlass(vec2 centerCoord, float blurRadius) {' + sLineBreak +
-      '  vec3 acc = vec3(0.0);' + sLineBreak +
-      '  float totalWeight = 0.0;' + sLineBreak +
-      '  for(float x = -2.0; x <= 2.0; x += 1.0) {' + sLineBreak +
-      '    for(float y = -2.0; y <= 2.0; y += 1.0) {' + sLineBreak +
-      '      vec2 offset = vec2(x, y) * (blurRadius * 0.5);' + sLineBreak +
-      '      float w = exp(-(x*x + y*y) * 0.25);' + sLineBreak +
-      '      acc += image.eval(centerCoord + offset).rgb * w;' + sLineBreak +
-      '      totalWeight += w;' + sLineBreak +
-      '    }' + sLineBreak +
-      '  }' + sLineBreak +
-      '  return acc / totalWeight;' + sLineBreak +
-      '}' + sLineBreak +
-      'vec4 main(vec2 coord) {' + sLineBreak +
+      'half4 main(vec2 coord) {' + sLineBreak +
       '  vec2 halfRes = resolution * 0.5;' + sLineBreak +
       '  vec2 p = coord - halfRes;' + sLineBreak +
       '  float r = min(iCornerRadius, min(halfRes.x, halfRes.y));' + sLineBreak +
       '  float d = sdRoundedBox(p, halfRes, r);' + sLineBreak +
       '  vec2 globalCoord = coord + u_offset;' + sLineBreak +
-      '  vec4 bg = image.eval(globalCoord);' + sLineBreak +
-      '  float aa = smoothstep(-1.2, 1.2, d);' + sLineBreak +
-      '  if (d > 0.0) {' + sLineBreak +
-      '    float glowMask = exp(-d * GLOW_SPREAD) * smoothstep(20.0, 0.0, d) * uGlowIntensity;' + sLineBreak +
-      '    vec3 glowingBg = mix(bg.rgb, GLOW_COLOR, glowMask);' + sLineBreak +
-      '    return mix(bg, vec4(glowingBg, bg.a), 1.0 - aa);' + sLineBreak +
-      '  }' + sLineBreak +
-      '  vec2 center = halfRes;' + sLineBreak +
-      '  vec2 toCenter = normalize((globalCoord - u_offset) - center + vec2(0.0001));' + sLineBreak +
-      '  float maxEdgeDist = min(halfRes.x, halfRes.y);' + sLineBreak +
+      '  if (d > 0.0) return image.eval(globalCoord);' + sLineBreak +
       '  float interiorDepth = -d;' + sLineBreak +
-      '  float normalizedDist = clamp(interiorDepth / max(1.0, maxEdgeDist), 0.0, 1.0);' + sLineBreak +
-      '  float smoothLens = smoothstep(0.0, 1.0, normalizedDist);' + sLineBreak +
-      '  vec2 offset = toCenter * uRefrMagnitude * (1.0 - smoothLens);' + sLineBreak +
-      '  vec2 coordR = globalCoord + offset * (1.0 + uAberration);' + sLineBreak +
-      '  vec2 coordG = globalCoord + offset;' + sLineBreak +
-      '  vec2 coordB = globalCoord + offset * (1.0 - uAberration);' + sLineBreak +
-      '  float rChan = sampleFrostedGlass(coordR, uBlurRadius).r;' + sLineBreak +
-      '  float gChan = sampleFrostedGlass(coordG, uBlurRadius).g;' + sLineBreak +
-      '  float bChan = sampleFrostedGlass(coordB, uBlurRadius).b;' + sLineBreak +
-      '  vec3 glassColor = vec3(rChan, gChan, bChan);' + sLineBreak +
-      '  glassColor = mix(glassColor, vec3(1.0), (1.0 - smoothstep(0.0, 4.0, interiorDepth)) * 0.35);' + sLineBreak +
-      '  return mix(vec4(glassColor, 1.0), bg, aa);' + sLineBreak +
+      '  float bezelWidth = clamp(min(halfRes.x, halfRes.y) * 0.42, 14.0, 44.0);' + sLineBreak +
+      '  float edgeT = clamp(interiorDepth / bezelWidth, 0.0, 1.0);' + sLineBreak +
+      '  float lensCurve = pow(1.0 - edgeT, 2.4);' + sLineBreak +
+      '  vec2 dir = normalize(p + vec2(0.0001));' + sLineBreak +
+      '  vec2 refrOffset = -dir * uRefrMagnitude * lensCurve;' + sLineBreak +
+      '  vec2 coordR = globalCoord + refrOffset * (1.0 + uAberration);' + sLineBreak +
+      '  vec2 coordG = globalCoord + refrOffset;' + sLineBreak +
+      '  vec2 coordB = globalCoord + refrOffset * (1.0 - uAberration);' + sLineBreak +
+      '  vec3 glassColor = vec3(image.eval(coordR).r, image.eval(coordG).g, image.eval(coordB).b);' + sLineBreak +
+      '  float frostTint = clamp(uBlurRadius * 0.055, 0.02, 0.16);' + sLineBreak +
+      '  glassColor = mix(glassColor, vec3(1.0), frostTint);' + sLineBreak +
+      '  // 3D Apple bevel: bright top-left/bottom-right Fresnel rim + subtle inner depth shadow' + sLineBreak +
+      '  float rimMask = 1.0 - smoothstep(0.0, 2.2, interiorDepth);' + sLineBreak +
+      '  float fresnel = pow(1.0 - edgeT, 4.0) * 0.32;' + sLineBreak +
+      '  float dirLight = 0.50 + 0.50 * abs(dot(dir, normalize(vec2(-0.7, -0.7))));' + sLineBreak +
+      '  float mouseDist = length(coord - u_mouse);' + sLineBreak +
+      '  float mouseGlow = exp(-mouseDist / max(40.0, min(halfRes.x, halfRes.y))) * 0.18;' + sLineBreak +
+      '  float specular = ((rimMask * 0.85 + fresnel) * dirLight + mouseGlow * (1.0 - edgeT * 0.6)) * uGlowIntensity;' + sLineBreak +
+      '  glassColor = mix(glassColor, vec3(1.0), clamp(specular, 0.0, 0.88));' + sLineBreak +
+      '  return half4(glassColor, 1.0);' + sLineBreak +
       '}';
+  protected
+    function GetBackdropInputFilter: ISkImageFilter; override;
   public
     constructor Create(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 2000); reintroduce; overload;
     constructor Create(const ARefrMagnitude: Single = 14.0; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 2000); reintroduce; overload;
     procedure Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single); override;
   end;
 
+  { Preset 10: Liquid Glass (Apple iOS 26 / macOS Tahoe fluid glass: silky Gaussian blur + organic lensing + interactive mouse/touch specular) }
+  TFluentLiquidGlassEffect = class(TFluentShaderEffect)
+  private
+    FBlurRadius: Single;
+    const LIQUID_GLASS_SKSL =
+      'uniform shader image;' + sLineBreak +
+      'uniform float time;' + sLineBreak +
+      'uniform vec2 resolution;' + sLineBreak +
+      'uniform vec2 u_offset;' + sLineBreak +
+      'uniform vec2 u_mouse;' + sLineBreak +
+      'uniform float iCornerRadius;' + sLineBreak +
+      'uniform float uRefrMagnitude;' + sLineBreak +
+      'uniform float uAberration;' + sLineBreak +
+      'uniform float uBlurRadius;' + sLineBreak +
+      'uniform float uGlowIntensity;' + sLineBreak +
+      'float sdRoundedBox(vec2 p, vec2 b, float r) {' + sLineBreak +
+      '  vec2 d = abs(p) - b + r;' + sLineBreak +
+      '  return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;' + sLineBreak +
+      '}' + sLineBreak +
+      'half4 main(vec2 coord) {' + sLineBreak +
+      '  vec2 halfRes = resolution * 0.5;' + sLineBreak +
+      '  vec2 p = coord - halfRes;' + sLineBreak +
+      '  float r = min(iCornerRadius, min(halfRes.x, halfRes.y));' + sLineBreak +
+      '  float angle = atan(p.y, p.x);' + sLineBreak +
+      '  // High-surface-tension organic breathing & interactive mouse bulge' + sLineBreak +
+      '  float edgeWave = sin(angle * 3.0 + time * 1.8) * 1.6 + cos(angle * 5.0 - time * 1.3) * 0.9;' + sLineBreak +
+      '  float d = sdRoundedBox(p, halfRes, r) + edgeWave;' + sLineBreak +
+      '  vec2 globalCoord = coord + u_offset;' + sLineBreak +
+      '  if (d > 0.0) return image.eval(globalCoord);' + sLineBreak +
+      '  float interiorDepth = -d;' + sLineBreak +
+      '  float bezelWidth = clamp(min(halfRes.x, halfRes.y) * 0.45, 16.0, 48.0);' + sLineBreak +
+      '  float edgeT = clamp(interiorDepth / bezelWidth, 0.0, 1.0);' + sLineBreak +
+      '  float lensCurve = pow(1.0 - edgeT, 2.2);' + sLineBreak +
+      '  vec2 dir = normalize(p + vec2(0.0001));' + sLineBreak +
+      '  // Smooth liquid surface ripple + cursor lens attraction' + sLineBreak +
+      '  vec2 fluidRipple = vec2(' + sLineBreak +
+      '    sin(p.y * 0.04 + time * 2.0) * cos(p.x * 0.03 - time * 1.5),' + sLineBreak +
+      '    cos(p.x * 0.04 - time * 1.8) * sin(p.y * 0.03 + time * 1.6)' + sLineBreak +
+      '  ) * (uRefrMagnitude * 0.28);' + sLineBreak +
+      '  vec2 toMouse = coord - u_mouse;' + sLineBreak +
+      '  float mouseDist = length(toMouse);' + sLineBreak +
+      '  float mouseLens = exp(-mouseDist / max(45.0, min(halfRes.x, halfRes.y) * 0.8));' + sLineBreak +
+      '  vec2 mouseOffset = -normalize(toMouse + vec2(0.0001)) * (uRefrMagnitude * 0.45 * mouseLens);' + sLineBreak +
+      '  vec2 refrOffset = (-dir * uRefrMagnitude * lensCurve) + fluidRipple + mouseOffset;' + sLineBreak +
+      '  vec2 coordR = globalCoord + refrOffset * (1.0 + uAberration);' + sLineBreak +
+      '  vec2 coordG = globalCoord + refrOffset;' + sLineBreak +
+      '  vec2 coordB = globalCoord + refrOffset * (1.0 - uAberration);' + sLineBreak +
+      '  vec3 glassColor = vec3(image.eval(coordR).r, image.eval(coordG).g, image.eval(coordB).b);' + sLineBreak +
+      '  float frostTint = clamp(uBlurRadius * 0.055, 0.02, 0.16);' + sLineBreak +
+      '  glassColor = mix(glassColor, vec3(1.0), frostTint);' + sLineBreak +
+      '  // Apple Liquid Glass sweeping specular rim + cursor highlight' + sLineBreak +
+      '  float rimMask = 1.0 - smoothstep(0.0, 2.5, interiorDepth);' + sLineBreak +
+      '  float fresnel = pow(1.0 - edgeT, 3.8) * 0.38;' + sLineBreak +
+      '  float sweep = 0.55 + 0.45 * sin(angle * 2.0 - time * 2.2);' + sLineBreak +
+      '  float specular = ((rimMask * 0.90 + fresnel) * sweep + mouseLens * 0.25) * uGlowIntensity;' + sLineBreak +
+      '  glassColor = mix(glassColor, vec3(1.0), clamp(specular, 0.0, 0.92));' + sLineBreak +
+      '  return half4(glassColor, 1.0);' + sLineBreak +
+      '}';
+  protected
+    function GetBackdropInputFilter: ISkImageFilter; override;
+  public
+    constructor Create(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal = 0); reintroduce; overload;
+    constructor Create(const ARefrMagnitude: Single = 14.0; const AAberration: Single = 0.08; const ABlurRadius: Single = 0.8; const AGlowIntensity: Single = 0.40; const ADurationMs: Cardinal = 0); reintroduce; overload;
+  end;
+
+  { Preset 11: Liquid Glass Group (SDF Smooth-Union Metaball merging of multiple child controls like Apple Liquid Glass droplets) }
+  TFluentLiquidGlassGroupEffect = class(TFluentShaderEffect)
+  private
+    const MAX_SHAPES = 8;
+    const LIQUID_GLASS_GROUP_SKSL =
+      'uniform shader image;' + sLineBreak +
+      'uniform float time;' + sLineBreak +
+      'uniform vec2 resolution;' + sLineBreak +
+      'uniform vec2 u_offset;' + sLineBreak +
+      'uniform vec2 u_mouse;' + sLineBreak +
+      'uniform float uShapeCount;' + sLineBreak +
+      'uniform vec2 uPos0; uniform vec2 uHalf0; uniform float uRad0;' + sLineBreak +
+      'uniform vec2 uPos1; uniform vec2 uHalf1; uniform float uRad1;' + sLineBreak +
+      'uniform vec2 uPos2; uniform vec2 uHalf2; uniform float uRad2;' + sLineBreak +
+      'uniform vec2 uPos3; uniform vec2 uHalf3; uniform float uRad3;' + sLineBreak +
+      'uniform vec2 uPos4; uniform vec2 uHalf4; uniform float uRad4;' + sLineBreak +
+      'uniform vec2 uPos5; uniform vec2 uHalf5; uniform float uRad5;' + sLineBreak +
+      'uniform vec2 uPos6; uniform vec2 uHalf6; uniform float uRad6;' + sLineBreak +
+      'uniform vec2 uPos7; uniform vec2 uHalf7; uniform float uRad7;' + sLineBreak +
+      'uniform float uSmoothness;' + sLineBreak +
+      'uniform float uRefrMagnitude;' + sLineBreak +
+      'uniform float uAberration;' + sLineBreak +
+      'uniform float uBlurRadius;' + sLineBreak +
+      'uniform float uGlowIntensity;' + sLineBreak +
+      'float sdRoundedBox(vec2 p, vec2 b, float r) {' + sLineBreak +
+      '  vec2 d = abs(p) - b + r;' + sLineBreak +
+      '  return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;' + sLineBreak +
+      '}' + sLineBreak +
+      'float smin(float a, float b, float k) {' + sLineBreak +
+      '  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);' + sLineBreak +
+      '  return mix(b, a, h) - k * h * (1.0 - h);' + sLineBreak +
+      '}' + sLineBreak +
+      'float shapeDist(vec2 pos, vec2 c, vec2 hs, float rad) {' + sLineBreak +
+      '  float r = min(rad, min(hs.x, hs.y));' + sLineBreak +
+      '  return sdRoundedBox(pos - c, hs, r);' + sLineBreak +
+      '}' + sLineBreak +
+      'float sceneSDF(vec2 pos) {' + sLineBreak +
+      '  float d = 100000.0;' + sLineBreak +
+      '  float k = max(0.001, uSmoothness);' + sLineBreak +
+      '  if (uShapeCount > 0.5) d = shapeDist(pos, uPos0, uHalf0, uRad0);' + sLineBreak +
+      '  if (uShapeCount > 1.5) d = smin(d, shapeDist(pos, uPos1, uHalf1, uRad1), k);' + sLineBreak +
+      '  if (uShapeCount > 2.5) d = smin(d, shapeDist(pos, uPos2, uHalf2, uRad2), k);' + sLineBreak +
+      '  if (uShapeCount > 3.5) d = smin(d, shapeDist(pos, uPos3, uHalf3, uRad3), k);' + sLineBreak +
+      '  if (uShapeCount > 4.5) d = smin(d, shapeDist(pos, uPos4, uHalf4, uRad4), k);' + sLineBreak +
+      '  if (uShapeCount > 5.5) d = smin(d, shapeDist(pos, uPos5, uHalf5, uRad5), k);' + sLineBreak +
+      '  if (uShapeCount > 6.5) d = smin(d, shapeDist(pos, uPos6, uHalf6, uRad6), k);' + sLineBreak +
+      '  if (uShapeCount > 7.5) d = smin(d, shapeDist(pos, uPos7, uHalf7, uRad7), k);' + sLineBreak +
+      '  return d;' + sLineBreak +
+      '}' + sLineBreak +
+      'half4 main(vec2 coord) {' + sLineBreak +
+      '  vec2 globalCoord = coord + u_offset;' + sLineBreak +
+      '  if (uShapeCount < 0.5) return half4(0.0);' + sLineBreak +
+      '  float d = sceneSDF(coord);' + sLineBreak +
+      '  if (d > 1.0) return half4(0.0);' + sLineBreak +
+      '  float aa = smoothstep(0.8, -0.8, d);' + sLineBreak +
+      '  float interiorDepth = max(0.0, -d);' + sLineBreak +
+      '  float bezelWidth = 28.0;' + sLineBreak +
+      '  float edgeT = clamp(interiorDepth / bezelWidth, 0.0, 1.0);' + sLineBreak +
+      '  float lensCurve = pow(1.0 - edgeT, 2.2);' + sLineBreak +
+      '  float eps = 1.5;' + sLineBreak +
+      '  vec2 grad = vec2(' + sLineBreak +
+      '    sceneSDF(coord + vec2(eps, 0.0)) - sceneSDF(coord - vec2(eps, 0.0)),' + sLineBreak +
+      '    sceneSDF(coord + vec2(0.0, eps)) - sceneSDF(coord - vec2(0.0, eps))' + sLineBreak +
+      '  );' + sLineBreak +
+      '  vec2 dir = normalize(grad + vec2(0.0001));' + sLineBreak +
+      '  vec2 toMouse = coord - u_mouse;' + sLineBreak +
+      '  float mouseLens = exp(-length(toMouse) / 60.0);' + sLineBreak +
+      '  vec2 mouseOffset = -normalize(toMouse + vec2(0.0001)) * (uRefrMagnitude * 0.35 * mouseLens);' + sLineBreak +
+      '  vec2 refrOffset = (-dir * uRefrMagnitude * lensCurve) + mouseOffset;' + sLineBreak +
+      '  vec2 coordR = globalCoord + refrOffset * (1.0 + uAberration);' + sLineBreak +
+      '  vec2 coordG = globalCoord + refrOffset;' + sLineBreak +
+      '  vec2 coordB = globalCoord + refrOffset * (1.0 - uAberration);' + sLineBreak +
+      '  vec3 glassColor = vec3(image.eval(coordR).r, image.eval(coordG).g, image.eval(coordB).b);' + sLineBreak +
+      '  float frostTint = clamp(uBlurRadius * 0.055, 0.02, 0.16);' + sLineBreak +
+      '  glassColor = mix(glassColor, vec3(1.0), frostTint);' + sLineBreak +
+      '  float rimMask = 1.0 - smoothstep(0.0, 2.4, interiorDepth);' + sLineBreak +
+      '  float fresnel = pow(1.0 - edgeT, 3.8) * 0.38;' + sLineBreak +
+      '  float dirLight = 0.50 + 0.50 * abs(dot(dir, normalize(vec2(-0.7, -0.7))));' + sLineBreak +
+      '  float specular = ((rimMask * 0.90 + fresnel) * dirLight + mouseLens * 0.22) * uGlowIntensity;' + sLineBreak +
+      '  glassColor = mix(glassColor, vec3(1.0), clamp(specular, 0.0, 0.92));' + sLineBreak +
+      '  return half4(glassColor * aa, aa);' + sLineBreak +
+      '}';
+  private
+    FTargets: TArray<TControl>;
+    FBlurRadius: Single;
+    FSmoothness: Single;
+  protected
+    function GetBackdropInputFilter: ISkImageFilter; override;
+    procedure ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single); override;
+  public
+    constructor Create(const ATargets: TArray<TControl>; const AStyle: TFluentGlassStyle = TFluentGlassStyle.Frosted; const ASmoothness: Single = 18.0; const ADurationMs: Cardinal = 0); reintroduce; overload;
+    constructor Create(const ATargets: TArray<TControl>; const ASmoothness, ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal = 0); reintroduce; overload;
+    function Clone: IMotionEffect; override;
+  end;
+
 implementation
+
+uses
+  FMX.Forms;
 
 { TShaderUniform }
 
@@ -587,7 +737,12 @@ begin
     ABuilder.SetUniform('u_offset', PointF(0, 0));
 
   if (FEffect.IndexOfUniform('u_mouse') >= 0) and (not FUniforms.ContainsKey('u_mouse')) then
-    ABuilder.SetUniform('u_mouse', PointF(ARect.Width * 0.5, ARect.Height * 0.5));
+  begin
+    if Assigned(FControl) then
+      ABuilder.SetUniform('u_mouse', FControl.ScreenToLocal(Screen.MousePos))
+    else
+      ABuilder.SetUniform('u_mouse', PointF(ARect.Width * 0.5, ARect.Height * 0.5));
+  end;
 
   // 2. Custom Uniforms
   for Pair in FUniforms do
@@ -606,6 +761,11 @@ begin
       end;
     end;
   end;
+end;
+
+function TFluentShaderEffect.GetBackdropInputFilter: ISkImageFilter;
+begin
+  Result := nil;
 end;
 
 procedure TFluentShaderEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);
@@ -645,7 +805,7 @@ begin
 
     if ChildName <> '' then
     begin
-      BackdropFilter := TSkImageFilter.MakeRuntimeShader(Builder, ChildName, nil);
+      BackdropFilter := TSkImageFilter.MakeRuntimeShader(Builder, ChildName, GetBackdropInputFilter);
       if Assigned(BackdropFilter) then
       begin
         PaintObj := TSkPaint.Create;
@@ -833,35 +993,55 @@ var
   Backdrop: ISkImageFilter;
   TintPaint: ISkPaint;
   BorderPaint: ISkPaint;
-  LSaveCount: Integer;
+  CornerRadius: Single;
+  OuterSaveCount, LSaveCount: Integer;
 begin
   if not Assigned(ACanvas) then
     Exit;
 
-  // 1. Create Gaussian Blur Backdrop filter from underlying scene pixels
-  Backdrop := TSkImageFilter.MakeBlur(15.0, 15.0, nil, TSkTileMode.Clamp);
-
-  // 2. SaveLayer with backdrop filter
-  LSaveCount := ACanvas.SaveLayer(ARect, nil, Backdrop);
+  CornerRadius := ExtractCornerRadius;
+  OuterSaveCount := ACanvas.Save;
   try
-    // 3. Draw frosted tint overlay
-    TintPaint := TSkPaint.Create;
-    TintPaint.Color := FTintColor;
-    TintPaint.AlphaF := AOpacity * (TAlphaColorRec(FTintColor).A / 255.0);
-    ACanvas.DrawRect(ARect, TintPaint);
+    if CornerRadius > 0.5 then
+      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Intersect, True)
+    else if Assigned(FControl) and (FControl is TCircle) then
+      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5), TSkClipOp.Intersect, True)
+    else
+      ACanvas.ClipRect(ARect, TSkClipOp.Intersect, True);
 
-    // 4. Draw glass border light
-    if FBorderLight > 0.0 then
-    begin
-      BorderPaint := TSkPaint.Create;
-      BorderPaint.Style := TSkPaintStyle.Stroke;
-      BorderPaint.StrokeWidth := 1.0;
-      BorderPaint.Color := $40FFFFFF;
-      BorderPaint.AlphaF := AOpacity * FBorderLight * 0.5;
-      ACanvas.DrawRect(ARect, BorderPaint);
+    // 1. Create Gaussian Blur Backdrop filter from underlying scene pixels
+    Backdrop := TSkImageFilter.MakeBlur(15.0, 15.0, nil, TSkTileMode.Clamp);
+
+    // 2. SaveLayer with backdrop filter
+    LSaveCount := ACanvas.SaveLayer(ARect, nil, Backdrop);
+    try
+      // 3. Draw frosted tint overlay
+      TintPaint := TSkPaint.Create;
+      TintPaint.Color := FTintColor;
+      TintPaint.AlphaF := AOpacity * (TAlphaColorRec(FTintColor).A / 255.0);
+      ACanvas.DrawRect(ARect, TintPaint);
+
+      // 4. Draw glass border light
+      if FBorderLight > 0.0 then
+      begin
+        BorderPaint := TSkPaint.Create;
+        BorderPaint.Style := TSkPaintStyle.Stroke;
+        BorderPaint.StrokeWidth := 1.0;
+        BorderPaint.AntiAlias := True;
+        BorderPaint.Color := $40FFFFFF;
+        BorderPaint.AlphaF := AOpacity * FBorderLight * ($40 / 255.0);
+        if CornerRadius > 0.5 then
+          ACanvas.DrawRoundRect(ARect, CornerRadius, CornerRadius, BorderPaint)
+        else if Assigned(FControl) and (FControl is TCircle) then
+          ACanvas.DrawOval(ARect, BorderPaint)
+        else
+          ACanvas.DrawRect(ARect, BorderPaint);
+      end;
+    finally
+      ACanvas.RestoreToCount(LSaveCount);
     end;
   finally
-    ACanvas.RestoreToCount(LSaveCount);
+    ACanvas.RestoreToCount(OuterSaveCount);
   end;
 end;
 
@@ -925,9 +1105,9 @@ begin
   SetUniform('uSpeed', ASpeed);
 end;
 
-{ TFluentLiquidGlassEffect }
+{ TFluentGlassEffect }
 
-constructor TFluentLiquidGlassEffect.Create(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal);
+constructor TFluentGlassEffect.Create(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal);
 var
   LRefr, LAberr, LBlur, LGlow: Single;
 begin
@@ -972,9 +1152,9 @@ begin
   Create(LRefr, LAberr, LBlur, LGlow, ADurationMs);
 end;
 
-constructor TFluentLiquidGlassEffect.Create(const ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal);
+constructor TFluentGlassEffect.Create(const ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(LIQUID_GLASS_SKSL, ADurationMs, TShaderDrawMode.Overlay);
+  inherited Create(GLASS_SKSL, ADurationMs, TShaderDrawMode.Overlay);
   FBlurRadius := ABlurRadius;
   FGlowIntensity := AGlowIntensity;
   SetUniform('uRefrMagnitude', ARefrMagnitude);
@@ -983,41 +1163,222 @@ begin
   SetUniform('uGlowIntensity', AGlowIntensity);
 end;
 
-procedure TFluentLiquidGlassEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);
+function TFluentGlassEffect.GetBackdropInputFilter: ISkImageFilter;
 var
-  Backdrop: ISkImageFilter;
-  TintPaint: ISkPaint;
-  BorderPaint: ISkPaint;
-  LSaveCount: Integer;
+  Sigma: Single;
 begin
-  if not Assigned(ACanvas) then
+  if FBlurRadius <= 0.05 then
+    Exit(nil);
+  Sigma := FBlurRadius * 4.0;
+  Result := TSkImageFilter.MakeBlur(Sigma, Sigma, nil, TSkTileMode.Clamp);
+end;
+
+procedure TFluentGlassEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);
+begin
+  if Assigned(FEffect) then
+    inherited Paint(ACanvas, ARect, AOpacity);
+end;
+
+{ TFluentLiquidGlassEffect }
+
+constructor TFluentLiquidGlassEffect.Create(const AStyle: TFluentGlassStyle; const ADurationMs: Cardinal);
+var
+  LRefr, LAberr, LBlur, LGlow: Single;
+begin
+  case AStyle of
+    TFluentGlassStyle.ClearLiquid:
+      begin
+        LRefr := 14.0;
+        LAberr := 0.08;
+        LBlur := 0.8;
+        LGlow := 0.45;
+      end;
+    TFluentGlassStyle.Frosted:
+      begin
+        LRefr := 18.0;
+        LAberr := 0.12;
+        LBlur := 2.5;
+        LGlow := 0.35;
+      end;
+    TFluentGlassStyle.DynamicIsland:
+      begin
+        LRefr := 12.0;
+        LAberr := 0.06;
+        LBlur := 0.3;
+        LGlow := 0.55;
+      end;
+    TFluentGlassStyle.HeavyPrism:
+      begin
+        LRefr := 24.0;
+        LAberr := 0.25;
+        LBlur := 1.2;
+        LGlow := 0.45;
+      end;
+  else
+    begin
+      LRefr := 14.0;
+      LAberr := 0.08;
+      LBlur := 0.8;
+      LGlow := 0.45;
+    end;
+  end;
+
+  Create(LRefr, LAberr, LBlur, LGlow, ADurationMs);
+end;
+
+constructor TFluentLiquidGlassEffect.Create(const ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal);
+begin
+  inherited Create(LIQUID_GLASS_SKSL, ADurationMs, TShaderDrawMode.Overlay);
+  FBlurRadius := ABlurRadius;
+  SetUniform('uRefrMagnitude', ARefrMagnitude);
+  SetUniform('uAberration', AAberration);
+  SetUniform('uBlurRadius', ABlurRadius);
+  SetUniform('uGlowIntensity', AGlowIntensity);
+end;
+
+function TFluentLiquidGlassEffect.GetBackdropInputFilter: ISkImageFilter;
+var
+  Sigma: Single;
+begin
+  if FBlurRadius <= 0.05 then
+    Exit(nil);
+  Sigma := FBlurRadius * 4.0;
+  Result := TSkImageFilter.MakeBlur(Sigma, Sigma, nil, TSkTileMode.Clamp);
+end;
+
+{ TFluentLiquidGlassGroupEffect }
+
+constructor TFluentLiquidGlassGroupEffect.Create(const ATargets: TArray<TControl>; const AStyle: TFluentGlassStyle; const ASmoothness: Single; const ADurationMs: Cardinal);
+var
+  LRefr, LAberr, LBlur, LGlow: Single;
+begin
+  case AStyle of
+    TFluentGlassStyle.ClearLiquid:
+      begin
+        LRefr := 14.0;
+        LAberr := 0.08;
+        LBlur := 0.8;
+        LGlow := 0.45;
+      end;
+    TFluentGlassStyle.Frosted:
+      begin
+        LRefr := 18.0;
+        LAberr := 0.12;
+        LBlur := 2.5;
+        LGlow := 0.35;
+      end;
+    TFluentGlassStyle.DynamicIsland:
+      begin
+        LRefr := 12.0;
+        LAberr := 0.06;
+        LBlur := 0.3;
+        LGlow := 0.55;
+      end;
+    TFluentGlassStyle.HeavyPrism:
+      begin
+        LRefr := 24.0;
+        LAberr := 0.25;
+        LBlur := 1.2;
+        LGlow := 0.45;
+      end;
+  else
+    begin
+      LRefr := 14.0;
+      LAberr := 0.08;
+      LBlur := 0.8;
+      LGlow := 0.45;
+    end;
+  end;
+
+  Create(ATargets, ASmoothness, LRefr, LAberr, LBlur, LGlow, ADurationMs);
+end;
+
+constructor TFluentLiquidGlassGroupEffect.Create(const ATargets: TArray<TControl>; const ASmoothness, ARefrMagnitude, AAberration, ABlurRadius, AGlowIntensity: Single; const ADurationMs: Cardinal);
+begin
+  inherited Create(LIQUID_GLASS_GROUP_SKSL, ADurationMs, TShaderDrawMode.Background);
+  FTargets := Copy(ATargets);
+  FSmoothness := Max(0.0, ASmoothness);
+  FBlurRadius := ABlurRadius;
+  SetUniform('uSmoothness', FSmoothness);
+  SetUniform('uRefrMagnitude', ARefrMagnitude);
+  SetUniform('uAberration', AAberration);
+  SetUniform('uBlurRadius', ABlurRadius);
+  SetUniform('uGlowIntensity', AGlowIntensity);
+end;
+
+function TFluentLiquidGlassGroupEffect.GetBackdropInputFilter: ISkImageFilter;
+var
+  Sigma: Single;
+begin
+  if FBlurRadius <= 0.05 then
+    Exit(nil);
+  Sigma := FBlurRadius * 4.0;
+  Result := TSkImageFilter.MakeBlur(Sigma, Sigma, nil, TSkTileMode.Clamp);
+end;
+
+procedure TFluentLiquidGlassGroupEffect.ApplyUniforms(const ABuilder: ISkRuntimeShaderBuilder; const ARect: TRectF; const AOpacity: Single);
+var
+  I, Count: Integer;
+  Ctrl: TControl;
+  TL, BR, CenterPt, HalfSz: TPointF;
+  Rad: Single;
+  IdxStr: string;
+begin
+  inherited ApplyUniforms(ABuilder, ARect, AOpacity);
+  if not Assigned(ABuilder) or not Assigned(FEffect) then
     Exit;
 
-  // 1. Hardware Gaussian Blur Backdrop filter from underlying scene pixels
-  Backdrop := TSkImageFilter.MakeBlur(FBlurRadius * 12.0, FBlurRadius * 12.0, nil, TSkTileMode.Clamp);
-
-  // 2. SaveLayer with backdrop filter
-  LSaveCount := ACanvas.SaveLayer(ARect, nil, Backdrop);
-  try
-    // 3. Draw glass highlight
-    TintPaint := TSkPaint.Create;
-    TintPaint.Color := $20FFFFFF;
-    TintPaint.AlphaF := AOpacity;
-    ACanvas.DrawRect(ARect, TintPaint);
-
-    // 4. Glow / Refractive edge light
-    if FGlowIntensity > 0.0 then
+  Count := 0;
+  if Assigned(FControl) then
+  begin
+    for I := 0 to Length(FTargets) - 1 do
     begin
-      BorderPaint := TSkPaint.Create;
-      BorderPaint.Style := TSkPaintStyle.Stroke;
-      BorderPaint.StrokeWidth := 1.2;
-      BorderPaint.Color := $60FFFFFF;
-      BorderPaint.AlphaF := AOpacity * FGlowIntensity;
-      ACanvas.DrawRect(ARect, BorderPaint);
+      if Count >= MAX_SHAPES then
+        Break;
+      Ctrl := FTargets[I];
+      if Assigned(Ctrl) and Ctrl.Visible then
+      begin
+        TL := FControl.AbsoluteToLocal(Ctrl.LocalToAbsolute(PointF(0, 0)));
+        BR := FControl.AbsoluteToLocal(Ctrl.LocalToAbsolute(PointF(Ctrl.Width, Ctrl.Height)));
+        CenterPt := PointF((TL.X + BR.X) * 0.5, (TL.Y + BR.Y) * 0.5);
+        HalfSz := PointF(Abs(BR.X - TL.X) * 0.5, Abs(BR.Y - TL.Y) * 0.5);
+
+        if Ctrl is TCircle then
+          Rad := Min(HalfSz.X, HalfSz.Y)
+        else if Ctrl is TRectangle then
+          Rad := Max(TRectangle(Ctrl).XRadius, TRectangle(Ctrl).YRadius)
+        else
+          Rad := 0.0;
+
+        IdxStr := IntToStr(Count);
+        if FEffect.IndexOfUniform('uPos' + IdxStr) >= 0 then
+          ABuilder.SetUniform('uPos' + IdxStr, CenterPt);
+        if FEffect.IndexOfUniform('uHalf' + IdxStr) >= 0 then
+          ABuilder.SetUniform('uHalf' + IdxStr, HalfSz);
+        if FEffect.IndexOfUniform('uRad' + IdxStr) >= 0 then
+          ABuilder.SetUniform('uRad' + IdxStr, Rad);
+        Inc(Count);
+      end;
     end;
-  finally
-    ACanvas.RestoreToCount(LSaveCount);
   end;
+
+  if FEffect.IndexOfUniform('uShapeCount') >= 0 then
+    ABuilder.SetUniform('uShapeCount', Single(Count));
+end;
+
+function TFluentLiquidGlassGroupEffect.Clone: IMotionEffect;
+var
+  Res: TFluentLiquidGlassGroupEffect;
+  Pair: TPair<string, TShaderUniform>;
+begin
+  Res := TFluentLiquidGlassGroupEffect.Create(FTargets, FSmoothness, 14.0, 0.08, FBlurRadius, 0.45, FDurationMs);
+  Res.FEase := FEase;
+  Res.FUseSpring := FUseSpring;
+  Res.FSpring := FSpring;
+  Res.FDelayMs := FDelayMs;
+  for Pair in FUniforms do
+    Res.FUniforms.AddOrSetValue(Pair.Key, Pair.Value);
+  Result := Res;
 end;
 
 end.

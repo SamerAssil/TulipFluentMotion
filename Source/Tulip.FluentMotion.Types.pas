@@ -154,7 +154,9 @@ type
     RippleDistortion,
     NeonGlow,
     GooeyMetaball,
-    LiquidGlass
+    Glass,
+    LiquidGlass,
+    LiquidGlassGroup
   );
 
   { Liquid Glass Visual Preset Styles }

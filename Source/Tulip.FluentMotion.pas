@@ -74,7 +74,9 @@ type
   TFluentRippleDistortionEffect = Tulip.FluentMotion.Effect.Shader.TFluentRippleDistortionEffect;
   TFluentNeonGlowEffect = Tulip.FluentMotion.Effect.Shader.TFluentNeonGlowEffect;
   TFluentGooeyMetaballEffect = Tulip.FluentMotion.Effect.Shader.TFluentGooeyMetaballEffect;
+  TFluentGlassEffect = Tulip.FluentMotion.Effect.Shader.TFluentGlassEffect;
   TFluentLiquidGlassEffect = Tulip.FluentMotion.Effect.Shader.TFluentLiquidGlassEffect;
+  TFluentLiquidGlassGroupEffect = Tulip.FluentMotion.Effect.Shader.TFluentLiquidGlassGroupEffect;
 
   TFluentMotionDriver = Tulip.FluentMotion.Driver.TFluentMotionDriver;
   TFluentMotionFormDriver = Tulip.FluentMotion.FormDriver.TFluentMotionFormDriver;

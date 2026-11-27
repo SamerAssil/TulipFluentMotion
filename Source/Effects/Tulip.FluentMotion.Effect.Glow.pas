@@ -5,33 +5,47 @@ interface
 uses
   System.SysUtils,
   System.Classes,
+  System.Types,
   System.Math,
   System.UITypes,
+  System.Generics.Collections,
+  System.Skia,
   FMX.Types,
   FMX.Controls,
-  FMX.Effects,
+  FMX.Objects,
+  FMX.Graphics,
   Tulip.FluentMotion.Types,
   Tulip.FluentMotion.Interfaces,
-  Tulip.FluentMotion.Effect.Base;
+  Tulip.FluentMotion.Effect.Shader;
 
 type
-  { Glow Effect: Animates neon / ambient outer glow using FMX TGlowEffect }
-  TFluentGlowEffect = class(TFluentMotionEffectBase)
+  { Glow Effect: Animates neon / ambient outer glow using Skia TSkMaskFilter.MakeBlur }
+  TFluentGlowEffect = class(TFluentShaderEffect)
   private
-    FGlowComponent: TGlowEffect;
+    type
+      TGlowState = record
+        Softness: Single;
+        Opacity: Single;
+      end;
+    class var FControlStates: TDictionary<TControl, TGlowState>;
+    class constructor CreateClass;
+    class destructor DestroyClass;
+  private
     FGlowColor: TAlphaColor;
     FFromSoftness: Single;
     FTargetSoftness: Single;
     FStartSoftness: Single;
     FInitialSoftness: Single;
+    FCurrentSoftness: Single;
 
     FFromOpacity: Single;
     FTargetOpacity: Single;
     FStartOpacity: Single;
     FInitialOpacity: Single;
+    FCurrentOpacity: Single;
 
     FAutoCapture: Boolean;
-    function GetOrCreateGlowComponent: TGlowEffect;
+    procedure SaveControlState(const ASoftness, AOpacity: Single);
   protected
     procedure DoAttach; override;
     procedure DoStart; override;
@@ -41,6 +55,9 @@ type
   public
     constructor Create(const AGlowColor: TAlphaColor; const ATargetSoftness: Single = 0.5; const ATargetOpacity: Single = 0.8; const ADurationMs: Cardinal = 250); reintroduce; overload;
     constructor Create(const ATargetOpacity: Single; const ADurationMs: Cardinal = 250); reintroduce; overload;
+
+    procedure Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single); override;
+    procedure PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single); override;
 
     function Clone: IMotionEffect; override;
 
@@ -53,14 +70,30 @@ implementation
 
 { TFluentGlowEffect }
 
+class constructor TFluentGlowEffect.CreateClass;
+begin
+  FControlStates := TDictionary<TControl, TGlowState>.Create;
+end;
+
+class destructor TFluentGlowEffect.DestroyClass;
+begin
+  FreeAndNil(FControlStates);
+end;
+
 constructor TFluentGlowEffect.Create(const AGlowColor: TAlphaColor; const ATargetSoftness, ATargetOpacity: Single; const ADurationMs: Cardinal);
 begin
-  inherited Create(ADurationMs);
+  inherited Create('', ADurationMs, TShaderDrawMode.Background);
   FGlowColor := AGlowColor;
   FTargetSoftness := EnsureRange(ATargetSoftness, 0.0, 1.0);
   FTargetOpacity := EnsureRange(ATargetOpacity, 0.0, 1.0);
   FFromSoftness := 0.0;
   FFromOpacity := 0.0;
+  FStartSoftness := 0.0;
+  FStartOpacity := 0.0;
+  FInitialSoftness := 0.0;
+  FInitialOpacity := 0.0;
+  FCurrentSoftness := 0.0;
+  FCurrentOpacity := 0.0;
   FAutoCapture := True;
   FEase := TFluentEase.OutCubic;
 end;
@@ -70,119 +103,108 @@ begin
   Create($8000A0FF, 0.5, ATargetOpacity, ADurationMs);
 end;
 
-function TFluentGlowEffect.GetOrCreateGlowComponent: TGlowEffect;
+procedure TFluentGlowEffect.SaveControlState(const ASoftness, AOpacity: Single);
 var
-  I: Integer;
+  State: TGlowState;
 begin
-  if not Assigned(FControl) then
-    Exit(nil);
+  if not Assigned(FControl) or not Assigned(FControlStates) then
+    Exit;
 
-  for I := 0 to FControl.ChildrenCount - 1 do
+  if AOpacity <= 0.01 then
+    FControlStates.Remove(FControl)
+  else
   begin
-    if FControl.Children[I] is TGlowEffect then
-    begin
-      FGlowComponent := TGlowEffect(FControl.Children[I]);
-      Exit(FGlowComponent);
-    end;
+    State.Softness := ASoftness;
+    State.Opacity := AOpacity;
+    FControlStates.AddOrSetValue(FControl, State);
   end;
-
-  FGlowComponent := TGlowEffect.Create(FControl);
-  FGlowComponent.Stored := False;
-  FGlowComponent.Parent := FControl;
-  FGlowComponent.Enabled := False;
-  FGlowComponent.Softness := 0.0;
-  FGlowComponent.Opacity := 0.0;
-  FGlowComponent.GlowColor := FGlowColor;
-  Result := FGlowComponent;
 end;
 
 procedure TFluentGlowEffect.DoAttach;
+var
+  State: TGlowState;
 begin
-  GetOrCreateGlowComponent;
-  if Assigned(FGlowComponent) then
+  inherited DoAttach;
+  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
   begin
-    if FGlowComponent.Enabled then
-    begin
-      FInitialSoftness := FGlowComponent.Softness;
-      FInitialOpacity := FGlowComponent.Opacity;
-    end
-    else
-    begin
-      FInitialSoftness := 0.0;
-      FInitialOpacity := 0.0;
-    end;
-
-    if FAutoCapture then
-    begin
-      FFromSoftness := FInitialSoftness;
-      FFromOpacity := FInitialOpacity;
-    end;
+    FInitialSoftness := State.Softness;
+    FInitialOpacity := State.Opacity;
+    FFromSoftness := FInitialSoftness;
+    FFromOpacity := FInitialOpacity;
   end;
 end;
 
 procedure TFluentGlowEffect.DoStart;
+var
+  State: TGlowState;
 begin
-  GetOrCreateGlowComponent;
-  if Assigned(FGlowComponent) then
+  inherited DoStart;
+  if FAutoCapture and Assigned(FControl) and Assigned(FControlStates) and FControlStates.TryGetValue(FControl, State) then
   begin
-    FGlowComponent.GlowColor := FGlowColor;
-    if FAutoCapture then
-    begin
-      if FGlowComponent.Enabled then
-      begin
-        FStartSoftness := FGlowComponent.Softness;
-        FStartOpacity := FGlowComponent.Opacity;
-      end
-      else
-      begin
-        FStartSoftness := 0.0;
-        FStartOpacity := 0.0;
-      end;
-    end
-    else
-    begin
-      FStartSoftness := FFromSoftness;
-      FStartOpacity := FFromOpacity;
-    end;
-
-    if (FStartOpacity > 0.01) or (FTargetOpacity > 0.01) then
-      FGlowComponent.Enabled := True;
+    FStartSoftness := State.Softness;
+    FStartOpacity := State.Opacity;
+  end
+  else
+  begin
+    FStartSoftness := FFromSoftness;
+    FStartOpacity := FFromOpacity;
   end;
+
+  FCurrentSoftness := FStartSoftness;
+  FCurrentOpacity := FStartOpacity;
+  SaveControlState(FCurrentSoftness, FCurrentOpacity);
 end;
 
 procedure TFluentGlowEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
-var
-  CurSoftness, CurOpacity: Single;
 begin
-  if not Assigned(FGlowComponent) then
-    Exit;
-
-  CurSoftness := EnsureRange(FStartSoftness + (FTargetSoftness - FStartSoftness) * AProgress, 0.0, 1.0);
-  CurOpacity := EnsureRange(FStartOpacity + (FTargetOpacity - FStartOpacity) * AProgress, 0.0, 1.0);
-
-  FGlowComponent.Softness := CurSoftness;
-  FGlowComponent.Opacity := CurOpacity;
-  FGlowComponent.Enabled := (CurOpacity > 0.01);
+  FCurrentSoftness := EnsureRange(FStartSoftness + (FTargetSoftness - FStartSoftness) * AProgress, 0.0, 1.0);
+  FCurrentOpacity := EnsureRange(FStartOpacity + (FTargetOpacity - FStartOpacity) * AProgress, 0.0, 1.0);
+  SaveControlState(FCurrentSoftness, FCurrentOpacity);
 end;
 
 procedure TFluentGlowEffect.DoFinish;
 begin
-  if Assigned(FGlowComponent) then
-  begin
-    FGlowComponent.Softness := FTargetSoftness;
-    FGlowComponent.Opacity := FTargetOpacity;
-    FGlowComponent.Enabled := (FTargetOpacity > 0.01);
-  end;
+  FCurrentSoftness := FTargetSoftness;
+  FCurrentOpacity := FTargetOpacity;
+  SaveControlState(FCurrentSoftness, FCurrentOpacity);
 end;
 
 procedure TFluentGlowEffect.DoReset;
 begin
-  if Assigned(FGlowComponent) then
-  begin
-    FGlowComponent.Softness := FInitialSoftness;
-    FGlowComponent.Opacity := FInitialOpacity;
-    FGlowComponent.Enabled := (FInitialOpacity > 0.01);
-  end;
+  FCurrentSoftness := FInitialSoftness;
+  FCurrentOpacity := FInitialOpacity;
+  SaveControlState(FCurrentSoftness, FCurrentOpacity);
+end;
+
+procedure TFluentGlowEffect.Paint(const ACanvas: ISkCanvas; const ARect: TRectF; const AOpacity: Single);
+var
+  Sigma, CornerRadius, FinalAlpha: Single;
+  PaintObj: ISkPaint;
+begin
+  if (not Assigned(ACanvas)) or (FCurrentOpacity <= 0.01) then
+    Exit;
+
+  Sigma := Max(1.0, FCurrentSoftness * 20.0);
+  FinalAlpha := EnsureRange(FCurrentOpacity * AOpacity, 0.0, 1.0);
+
+  PaintObj := TSkPaint.Create;
+  PaintObj.Color := FGlowColor;
+  PaintObj.AlphaF := FinalAlpha;
+  PaintObj.AntiAlias := True;
+  PaintObj.MaskFilter := TSkMaskFilter.MakeBlur(TSkBlurStyle.Outer, Sigma);
+
+  CornerRadius := ExtractCornerRadius;
+  if CornerRadius > 0.5 then
+    ACanvas.DrawRoundRect(ARect, CornerRadius, CornerRadius, PaintObj)
+  else if Assigned(FControl) and (FControl is TCircle) then
+    ACanvas.DrawOval(ARect, PaintObj)
+  else
+    ACanvas.DrawRect(ARect, PaintObj);
+end;
+
+procedure TFluentGlowEffect.PaintFMX(const ACanvas: TCanvas; const ARect: TRectF; const AOpacity: Single);
+begin
+  // Pure Skia effect; no FMX TGlowEffect fallback
 end;
 
 function TFluentGlowEffect.Clone: IMotionEffect;
