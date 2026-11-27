@@ -11,14 +11,10 @@
 [![Memory Hygiene](https://img.shields.io/badge/Memory%20Leaks-0%20(Zero%20Leaks)-success.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)]()
 
-![TulipFluentMotion Hero Banner](media/hero-banner.svg)
-
-<video src="media/intro.mp4" controls autoplay loop muted playsinline width="100%"></video>
-
-> [🎬 Watch Intro Video (`media/intro.mp4`)](media/intro.mp4)
 
 ---
 
+<a href="https://www.buymeacoffee.com/samerassil"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=samerassil&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
 
 ---
 
