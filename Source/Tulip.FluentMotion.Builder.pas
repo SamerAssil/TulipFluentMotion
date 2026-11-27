@@ -62,6 +62,7 @@ type
 
     procedure EnsureCurrentPhase;
     procedure AddConfiguredEffect(const AEffect: TFluentMotionEffectBase);
+    procedure ApplyStepAnchor(const AEffect: TFluentMotionEffectBase; const AAnchor: TMotionAnchor);
     procedure SetPhaseDuration(const ADurationMs: Cardinal);
     function EffectiveDuration(const ADurationMs: Cardinal; const ADefaultMs: Cardinal = 250): Cardinal;
   public
@@ -82,27 +83,27 @@ type
     function Anchor(const ACustomPoint: TPointF): IMotionBuilder; overload;
 
     { Physical Transformations }
-    function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
-    function Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
-    function ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-    function ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+    function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
+    function Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
+    function ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+    function ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
     function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
     function Move(const ADeltaX, ADeltaY: Single; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
     function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
-    function MoveX(const ADeltaX: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-    function MoveY(const ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+    function MoveX(const ADeltaX: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.TopLeft): IMotionBuilder;
+    function MoveY(const ADeltaY: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.TopLeft): IMotionBuilder;
     function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
     function MoveTo(const ATargetX, ATargetY: Single; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
     function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
 
-    function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-    function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+    function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+    function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
     { 3D Flip (SwiftUI rotation3DEffect) }
-    function Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350): IMotionBuilder;
-    function FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
-    function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
+    function Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+    function FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+    function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
     function Fade(const ATargetOpacity: Single; const ADurationMs: Cardinal = 200): IMotionBuilder; overload;
     function Fade(const AFromOpacity, ATargetOpacity: Single; const ADurationMs: Cardinal = 200): IMotionBuilder; overload;
@@ -134,15 +135,15 @@ type
 
     { Micro-interactions }
     function Shake(const AIntensity: Single = 8.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
-    function Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280): IMotionBuilder;
+    function Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
     function Bounce(const AHeight: Single = 16.0; const ADurationMs: Cardinal = 320): IMotionBuilder;
-    function Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350): IMotionBuilder;
+    function Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
     { Transitions (SwiftUI transitions) }
     function SlideIn(const ADirection: TTransitionDirection = TTransitionDirection.FromLeft; const ADistance: Single = 0; const ADurationMs: Cardinal = 300): IMotionBuilder;
     function SlideOut(const ADirection: TTransitionDirection = TTransitionDirection.FromRight; const ADistance: Single = 0; const ADurationMs: Cardinal = 300): IMotionBuilder;
-    function PopIn(const ADurationMs: Cardinal = 350): IMotionBuilder;
-    function PopOut(const ADurationMs: Cardinal = 250): IMotionBuilder;
+    function PopIn(const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+    function PopOut(const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
     { Advanced Effects (Glow, HueRotation, Resize) }
     function Glow(const AColor: TAlphaColor = $8000A0FF; const ASoftness: Single = 0.5; const AOpacity: Single = 0.8; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
@@ -164,8 +165,8 @@ type
     function Shimmer(const ADurationMs: Cardinal = 1000; const ADirection: TShimmerDirection = TShimmerDirection.LeftToRight; const AAngleDeg: Single = 20.0): IMotionBuilder; overload;
     function Shimmer(const ADirection: TShimmerDirection; const ADurationMs: Cardinal = 1000; const AAngleDeg: Single = 20.0): IMotionBuilder; overload;
     function Shimmer(const AConfig: TFluentShimmerConfig; const ADurationMs: Cardinal = 1000): IMotionBuilder; overload;
-    function Ripple(const ADurationMs: Cardinal = 450): IMotionBuilder; overload;
-    function Ripple(const AConfig: TFluentRippleConfig; const ADurationMs: Cardinal = 450): IMotionBuilder; overload;
+    function Ripple(const ADurationMs: Cardinal = 450; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
+    function Ripple(const AConfig: TFluentRippleConfig; const ADurationMs: Cardinal = 450; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
 
     { Skia Runtime Shaders & Presets }
     function CustomShader(const ASkSL: string; const ADurationMs: Cardinal = 1000; const ADrawMode: TShaderDrawMode = TShaderDrawMode.Overlay): IMotionBuilder;
@@ -273,6 +274,28 @@ begin
 
   // Reset transient per-step delay
   FCurrentDelayMs := 0;
+end;
+
+procedure TFluentMotionBuilder.ApplyStepAnchor(const AEffect: TFluentMotionEffectBase; const AAnchor: TMotionAnchor);
+var
+  EffectiveAnchor: TMotionAnchor;
+  EffectiveCustomPoint: TPointF;
+begin
+  if not Assigned(AEffect) then
+    Exit;
+
+  if FAnchorExplicitlySet then
+  begin
+    EffectiveAnchor := FCurrentAnchor;
+    EffectiveCustomPoint := FCurrentCustomAnchorPoint;
+  end
+  else
+  begin
+    EffectiveAnchor := AAnchor;
+    EffectiveCustomPoint := AAnchor.ToPointF(PointF(0.5, 0.5));
+  end;
+
+  AEffect.SetAnchor(EffectiveAnchor, EffectiveCustomPoint);
 end;
 
 procedure TFluentMotionBuilder.SetPhaseDuration(const ADurationMs: Cardinal);
@@ -444,39 +467,43 @@ begin
   Result := Self;
 end;
 
-function TFluentMotionBuilder.Scale(const ATargetScale: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Scale(const ATargetScale: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentScaleEffect;
 begin
   Eff := TFluentScaleEffect.Create(ATargetScale, EffectiveDuration(ADurationMs, 250));
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentScaleEffect;
 begin
   Eff := TFluentScaleEffect.Create(AFromScale, ATargetScale, EffectiveDuration(ADurationMs, 250));
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentScaleEffect;
 begin
   Eff := TFluentScaleEffect.MakeXY(ATargetScaleX, 1.0, EffectiveDuration(ADurationMs, 250));
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentScaleEffect;
 begin
   Eff := TFluentScaleEffect.MakeXY(1.0, ATargetScaleY, EffectiveDuration(ADurationMs, 250));
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
@@ -509,14 +536,24 @@ begin
   Result := Self;
 end;
 
-function TFluentMotionBuilder.MoveX(const ADeltaX: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.MoveX(const ADeltaX: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
+var
+  Eff: TFluentTranslateEffect;
 begin
-  Result := Move(ADeltaX, 0, ADurationMs);
+  Eff := TFluentTranslateEffect.CreateRelative(ADeltaX, 0, EffectiveDuration(ADurationMs, 250));
+  AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
+  Result := Self;
 end;
 
-function TFluentMotionBuilder.MoveY(const ADeltaY: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.MoveY(const ADeltaY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
+var
+  Eff: TFluentTranslateEffect;
 begin
-  Result := Move(0, ADeltaY, ADurationMs);
+  Eff := TFluentTranslateEffect.CreateRelative(0, ADeltaY, EffectiveDuration(ADurationMs, 250));
+  AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
+  Result := Self;
 end;
 
 function TFluentMotionBuilder.MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal): IMotionBuilder;
@@ -550,41 +587,44 @@ begin
   Result := Self;
 end;
 
-function TFluentMotionBuilder.Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentRotateEffect;
 begin
   Eff := TFluentRotateEffect.Create(ATargetAngleDeg, EffectiveDuration(ADurationMs, 250));
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentRotateEffect;
 begin
   Eff := TFluentRotateEffect.MakeRelative(ADeltaAngleDeg, EffectiveDuration(ADurationMs, 250));
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentFlip3DEffect;
 begin
   Eff := TFluentFlip3DEffect.Create(ATargetAngleDeg, AAxis, ADurationMs);
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.FlipHorizontal(const ATargetAngleDeg: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.FlipHorizontal(const ATargetAngleDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 begin
-  Result := Flip3D(ATargetAngleDeg, TFlipAxis.Horizontal, ADurationMs);
+  Result := Flip3D(ATargetAngleDeg, TFlipAxis.Horizontal, ADurationMs, AAnchor);
 end;
 
-function TFluentMotionBuilder.FlipVertical(const ATargetAngleDeg: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.FlipVertical(const ATargetAngleDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 begin
-  Result := Flip3D(ATargetAngleDeg, TFlipAxis.Vertical, ADurationMs);
+  Result := Flip3D(ATargetAngleDeg, TFlipAxis.Vertical, ADurationMs, AAnchor);
 end;
 
 function TFluentMotionBuilder.Fade(const ATargetOpacity: Single; const ADurationMs: Cardinal): IMotionBuilder;
@@ -739,12 +779,13 @@ begin
   Result := Self;
 end;
 
-function TFluentMotionBuilder.Pulse(const AScalePeak: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Pulse(const AScalePeak: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentPulseEffect;
 begin
   Eff := TFluentPulseEffect.Create(AScalePeak, ADurationMs);
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
@@ -757,12 +798,13 @@ begin
     .WithEase(TFluentEase.OutBounce);
 end;
 
-function TFluentMotionBuilder.Wiggle(const AIntensityDeg: Single; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Wiggle(const AIntensityDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentWiggleEffect;
 begin
   Eff := TFluentWiggleEffect.Create(AIntensityDeg, ADurationMs);
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
@@ -784,21 +826,23 @@ begin
   Result := Self;
 end;
 
-function TFluentMotionBuilder.PopIn(const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.PopIn(const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentPopEffect;
 begin
   Eff := TFluentPopEffect.Create(True, ADurationMs);
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.PopOut(const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.PopOut(const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentPopEffect;
 begin
   Eff := TFluentPopEffect.Create(False, ADurationMs);
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
@@ -959,21 +1003,23 @@ begin
   Result := Shimmer(LConfig, ADurationMs);
 end;
 
-function TFluentMotionBuilder.Ripple(const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Ripple(const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentRippleEffect;
 begin
   Eff := TFluentRippleEffect.Create(ADurationMs);
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 
-function TFluentMotionBuilder.Ripple(const AConfig: TFluentRippleConfig; const ADurationMs: Cardinal): IMotionBuilder;
+function TFluentMotionBuilder.Ripple(const AConfig: TFluentRippleConfig; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder;
 var
   Eff: TFluentRippleEffect;
 begin
   Eff := TFluentRippleEffect.Create(AConfig, ADurationMs);
   AddConfiguredEffect(Eff);
+  ApplyStepAnchor(Eff, AAnchor);
   Result := Self;
 end;
 

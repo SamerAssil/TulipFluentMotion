@@ -22,7 +22,7 @@ type
 
     { Instant Micro-interaction Helpers }
     procedure Shake(const AIntensity: Single = 8.0; const ADurationMs: Cardinal = 350);
-    procedure Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280);
+    procedure Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
     procedure Bounce(const AHeight: Single = 16.0; const ADurationMs: Cardinal = 320);
     procedure Fade(const ATargetOpacity: Single; const ADurationMs: Cardinal = 200); overload;
     procedure Fade(const AFromOpacity, ATargetOpacity: Single; const ADurationMs: Cardinal = 200); overload;
@@ -32,12 +32,12 @@ type
     procedure Unblur(const ADurationMs: Cardinal = 250);
     procedure Shimmer(const ADurationMs: Cardinal = 1000; const ADirection: TShimmerDirection = TShimmerDirection.LeftToRight; const AAngleDeg: Single = 20.0); overload;
     procedure Shimmer(const ADirection: TShimmerDirection; const ADurationMs: Cardinal = 1000; const AAngleDeg: Single = 20.0); overload;
-    procedure Ripple(const ADurationMs: Cardinal = 450);
+    procedure Ripple(const ADurationMs: Cardinal = 450; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
 
     { SwiftUI-Parity One-Liners }
-    procedure Flip3D(const ATargetAngleDeg: Single = 180.0; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350);
-    procedure FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350);
-    procedure FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350);
+    procedure Flip3D(const ATargetAngleDeg: Single = 180.0; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
+    procedure FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
+    procedure FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
     procedure ColorTo(const ATargetColor: TAlphaColor; const ADurationMs: Cardinal = 250);
     procedure Tint(const ATintColor: TAlphaColor; const ADurationMs: Cardinal = 250);
     procedure Grayscale(const ATargetAmount: Single = 1.0; const ADurationMs: Cardinal = 250);
@@ -49,12 +49,12 @@ type
     { Transitions & Advanced One-Liners }
     procedure SlideIn(const ADirection: TTransitionDirection = TTransitionDirection.FromLeft; const ADurationMs: Cardinal = 300);
     procedure SlideOut(const ADirection: TTransitionDirection = TTransitionDirection.FromRight; const ADurationMs: Cardinal = 300);
-    procedure PopIn(const ADurationMs: Cardinal = 350);
-    procedure PopOut(const ADurationMs: Cardinal = 250);
+    procedure PopIn(const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
+    procedure PopOut(const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
     procedure Glow(const AColor: TAlphaColor = $8000A0FF; const AOpacity: Single = 0.8; const ADurationMs: Cardinal = 250);
     procedure Unglow(const ADurationMs: Cardinal = 250);
     procedure HueRotation(const ATargetAngleDeg: Single = 360.0; const ADurationMs: Cardinal = 500);
-    procedure Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350);
+    procedure Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center);
     procedure MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.TopLeft); overload;
     procedure MoveTo(const ATargetX, ATargetY: Single; const AAnchor: TMotionAnchor); overload;
     procedure Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal = 250); overload;
@@ -128,9 +128,9 @@ begin
   Motion.Shake(AIntensity, ADurationMs).Start;
 end;
 
-procedure TFluentMotionControlHelper.Pulse(const AScalePeak: Single; const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.Pulse(const AScalePeak: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.Pulse(AScalePeak, ADurationMs).Start;
+  Motion.Pulse(AScalePeak, ADurationMs, AAnchor).Start;
 end;
 
 procedure TFluentMotionControlHelper.Bounce(const AHeight: Single; const ADurationMs: Cardinal);
@@ -178,24 +178,24 @@ begin
   Motion.Shimmer(ADurationMs, ADirection, AAngleDeg).Start;
 end;
 
-procedure TFluentMotionControlHelper.Ripple(const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.Ripple(const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.Ripple(ADurationMs).Start;
+  Motion.Ripple(ADurationMs, AAnchor).Start;
 end;
 
-procedure TFluentMotionControlHelper.Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis; const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.Flip3D(ATargetAngleDeg, AAxis, ADurationMs).Start;
+  Motion.Flip3D(ATargetAngleDeg, AAxis, ADurationMs, AAnchor).Start;
 end;
 
-procedure TFluentMotionControlHelper.FlipHorizontal(const ATargetAngleDeg: Single; const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.FlipHorizontal(const ATargetAngleDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.FlipHorizontal(ATargetAngleDeg, ADurationMs).Start;
+  Motion.FlipHorizontal(ATargetAngleDeg, ADurationMs, AAnchor).Start;
 end;
 
-procedure TFluentMotionControlHelper.FlipVertical(const ATargetAngleDeg: Single; const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.FlipVertical(const ATargetAngleDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.FlipVertical(ATargetAngleDeg, ADurationMs).Start;
+  Motion.FlipVertical(ATargetAngleDeg, ADurationMs, AAnchor).Start;
 end;
 
 procedure TFluentMotionControlHelper.ColorTo(const ATargetColor: TAlphaColor; const ADurationMs: Cardinal);
@@ -243,14 +243,14 @@ begin
   Motion.SlideOut(ADirection, 0, ADurationMs).Start;
 end;
 
-procedure TFluentMotionControlHelper.PopIn(const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.PopIn(const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.PopIn(ADurationMs).Start;
+  Motion.PopIn(ADurationMs, AAnchor).Start;
 end;
 
-procedure TFluentMotionControlHelper.PopOut(const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.PopOut(const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.PopOut(ADurationMs).Start;
+  Motion.PopOut(ADurationMs, AAnchor).Start;
 end;
 
 procedure TFluentMotionControlHelper.Glow(const AColor: TAlphaColor; const AOpacity: Single; const ADurationMs: Cardinal);
@@ -268,9 +268,9 @@ begin
   Motion.HueRotation(ATargetAngleDeg, ADurationMs).Start;
 end;
 
-procedure TFluentMotionControlHelper.Wiggle(const AIntensityDeg: Single; const ADurationMs: Cardinal);
+procedure TFluentMotionControlHelper.Wiggle(const AIntensityDeg: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);
 begin
-  Motion.Wiggle(AIntensityDeg, ADurationMs).Start;
+  Motion.Wiggle(AIntensityDeg, ADurationMs, AAnchor).Start;
 end;
 
 procedure TFluentMotionControlHelper.MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor);

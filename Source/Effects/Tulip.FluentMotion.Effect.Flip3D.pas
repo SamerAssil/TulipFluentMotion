@@ -137,13 +137,13 @@ begin
 
   if FAxis = TFlipAxis.Horizontal then
   begin
-    DeltaW := FControl.Width * (Abs(CosVal) - 1.0) * FInitialScaleX;
+    DeltaW := FControl.Width * (CosVal - 1.0) * FInitialScaleX;
     FControl.Position.X := FStartPosX - (DeltaW * AnchorPt.X);
     TControlAccess(FControl).Scale.X := FInitialScaleX * CosVal;
   end
   else
   begin
-    DeltaH := FControl.Height * (Abs(CosVal) - 1.0) * FInitialScaleY;
+    DeltaH := FControl.Height * (CosVal - 1.0) * FInitialScaleY;
     FControl.Position.Y := FStartPosY - (DeltaH * AnchorPt.Y);
     TControlAccess(FControl).Scale.Y := FInitialScaleY * CosVal;
   end;
@@ -163,13 +163,13 @@ begin
 
     if FAxis = TFlipAxis.Horizontal then
     begin
-      DeltaW := FControl.Width * (Abs(CosVal) - 1.0) * FInitialScaleX;
+      DeltaW := FControl.Width * (CosVal - 1.0) * FInitialScaleX;
       FControl.Position.X := FStartPosX - (DeltaW * AnchorPt.X);
       TControlAccess(FControl).Scale.X := FInitialScaleX * CosVal;
     end
     else
     begin
-      DeltaH := FControl.Height * (Abs(CosVal) - 1.0) * FInitialScaleY;
+      DeltaH := FControl.Height * (CosVal - 1.0) * FInitialScaleY;
       FControl.Position.Y := FStartPosY - (DeltaH * AnchorPt.Y);
       TControlAccess(FControl).Scale.Y := FInitialScaleY * CosVal;
     end;

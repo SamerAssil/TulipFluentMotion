@@ -191,34 +191,38 @@ end;
 ### أ. التحجيم والتكبير (Scale)
 ```pascal
 // تكبير متجانس لكلا المحورين
-function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
 // تكبير من قيمة بداية صريحة إلى قيمة نهاية
-function Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
 // تكبير المحور الأفقي فقط
-function ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 // تكبير المحور الرأسي فقط
-function ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 ```
 
 ### ب. الإزاحة المكانية (Move & Position)
 ```pascal
 // إزاحة نسبية لمحوري X و Y
-function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-function MoveX(const ADeltaX: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-function MoveY(const ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function Move(const ADeltaX, ADeltaY: Single; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
+function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
+function MoveX(const ADeltaX: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.TopLeft): IMotionBuilder;
+function MoveY(const ADeltaY: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.TopLeft): IMotionBuilder;
 // نقل مباشر لإحداثيات مطلقة داخل الحاوية
-function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function MoveTo(const ATargetX, ATargetY: Single; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
+function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
 ```
 
 ### ج. الدوران والانقلاب ثلاثي الأبعاد (Rotate & 3D Flip)
 ```pascal
-function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
 // انقلاب ثلاثي الأبعاد حول المحور الأفقي أو الرأسي مع منظور حقيقي
-function Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350): IMotionBuilder;
-function FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
-function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
+function Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 ```
 
 ### د. تعديل الأبعاد الحقيقية (Dynamic Bounds Resizing)
@@ -246,10 +250,9 @@ type
     Custom        // نقطة مخصصة يحددها المستخدم
   );
 
-// الاستخدام:
+// الاستخدام (مباشرة كآخر معامل، أو عبر .Anchor):
 MyControl.Motion
-  .Anchor(TMotionAnchor.TopCenter)
-  .ScaleY(1.5, 300)
+  .ScaleY(1.5, 300, TMotionAnchor.TopCenter)
   .Start;
 
 // أو تحديد إحداثيات نسبية مخصصة بدقة:
@@ -322,21 +325,21 @@ function Glow(const AColor: TAlphaColor = $8000A0FF; const ASoftness: Single = 0
 function Shake(const AIntensity: Single = 8.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
 
 // نبض وتوسع حجمي ارتشافي سريع
-function Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280): IMotionBuilder;
+function Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
 // قفزة رأسية مع ارتداد فيزيائي ممتع
 function Bounce(const AHeight: Single = 16.0; const ADurationMs: Cardinal = 320): IMotionBuilder;
 
 // اهتزاز تكتيكي يحاكي وضع تعديل أيقونات الشاشة الرئيسية في iOS
-function Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350): IMotionBuilder;
+function Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
 // انزلاق من وإلى حواف الشاشة مع تلاشي الشفافية
 function SlideIn(const ADirection: TTransitionDirection = TTransitionDirection.FromLeft; const ADistance: Single = 0; const ADurationMs: Cardinal = 300): IMotionBuilder;
 function SlideOut(const ADirection: TTransitionDirection = TTransitionDirection.FromRight; const ADistance: Single = 0; const ADurationMs: Cardinal = 300): IMotionBuilder;
 
 // انبثاق نابضي سريع من الصفر إلى الحجم الكامل أو العكس
-function PopIn(const ADurationMs: Cardinal = 350): IMotionBuilder;
-function PopOut(const ADurationMs: Cardinal = 250): IMotionBuilder;
+function PopIn(const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function PopOut(const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 ```
 
 ---

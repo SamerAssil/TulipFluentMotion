@@ -126,21 +126,20 @@ Self.Shake(14.0, 380);
 
 | Modifier | SwiftUI Equivalent | Description |
 | :--- | :--- | :--- |
-| **`Scale(Target, Duration)`** | `.scaleEffect` | Uniform or independent X/Y scaling with anchor support (`FromScale`, `ScaleX`, `ScaleY`). |
-| **`Move(DeltaX, DeltaY)`** | `.offset` | Relative coordinate offset displacement in pixels. |
-| **`MoveTo(TargetX, TargetY)`** | `.position` | Absolute coordinate positioning within the parent control. |
-| **`Rotate(TargetAngleDeg)`** | `.rotationEffect` | 2D rotation in degrees around a configurable anchor (`Anchor`). |
-| **`Flip3D(TargetAngleDeg, Axis)`** | `.rotation3DEffect` | True 2.5D perspective card flip around horizontal or vertical axes (`FlipHorizontal`, `FlipVertical`). |
-| **`ResizeTo(Width, Height)`** | `.frame(width:height:)` | Smooth physical dimension animation for accordion menus and expandable cards. |
+| **`Scale(Target, Duration, [Anchor])`** | `.scaleEffect` | Uniform or independent X/Y scaling with optional trailing anchor (`FromScale`, `ScaleX`, `ScaleY`). |
+| **`Move(DeltaX, DeltaY, [Duration], [Anchor])`** | `.offset` | Relative coordinate offset displacement in pixels (`MoveX`, `MoveY`). |
+| **`MoveTo(TargetX, TargetY, [Duration], [Anchor])`** | `.position` | Absolute coordinate positioning within the parent control. |
+| **`Rotate(TargetAngleDeg, [Duration], [Anchor])`** | `.rotationEffect` | 2D rotation in degrees around a configurable anchor (`RotateBy`). |
+| **`Flip3D(TargetAngleDeg, Axis, [Duration], [Anchor])`** | `.rotation3DEffect` | True 2.5D perspective card flip around horizontal or vertical axes (`FlipHorizontal`, `FlipVertical`). |
+| **`ResizeTo(Width, Height, [Duration], [Anchor])`** | `.frame(width:height:)` | Smooth physical dimension animation for accordion menus and expandable cards. |
 
 <!-- IMAGE_PLACEHOLDER: Transforms GIF (Scale, MoveTo, Rotate, Flip3D, ResizeTo) -->
 ![Transforms Demo](docs/images/transforms-demo.gif)
 
 ```pascal
-// Card 3D perspective flip with bouncy spring physics
+// Card 3D perspective flip with bouncy spring physics (optional trailing anchor)
 CardProfile.Motion
-  .Anchor(TMotionAnchor.Center)
-  .FlipHorizontal(180.0, 400)
+  .FlipHorizontal(180.0, 400, TMotionAnchor.Center)
   .WithSpring(TFluentSpring.Bouncy)
   .Start;
 ```

@@ -188,34 +188,38 @@ end;
 ### A. Scaling Modifiers
 ```pascal
 // Uniform scaling across X and Y
-function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
 // Explicit start and target scale factors
-function Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function Scale(const AFromScale, ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
 // Independent horizontal scale
-function ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function ScaleX(const ATargetScaleX: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 // Independent vertical scale
-function ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function ScaleY(const ATargetScaleY: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 ```
 
 ### B. Coordinate Translation
 ```pascal
 // Relative delta displacement
-function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-function MoveX(const ADeltaX: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-function MoveY(const ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function Move(const ADeltaX, ADeltaY: Single; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
+function Move(const ADeltaX, ADeltaY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
+function MoveX(const ADeltaX: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.TopLeft): IMotionBuilder;
+function MoveY(const ADeltaY: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.TopLeft): IMotionBuilder;
 // Absolute coordinate positioning inside container
-function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
+function MoveTo(const ATargetX, ATargetY: Single; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
+function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal; const AAnchor: TMotionAnchor): IMotionBuilder; overload;
 ```
 
 ### C. 2D Rotation & 3D Perspective Card Flips
 ```pascal
-function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
-function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250): IMotionBuilder;
+function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
 // 3D perspective rotation around horizontal or vertical axes
-function Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350): IMotionBuilder;
-function FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
-function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
+function Flip3D(const ATargetAngleDeg: Single; const AAxis: TFlipAxis = TFlipAxis.Horizontal; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function FlipHorizontal(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 ```
 
 ### D. Dynamic Bounds Resizing
@@ -243,13 +247,12 @@ type
     Custom        // User-defined point
   );
 
-// Usage:
+// Usage (either inline as the trailing parameter, or via .Anchor):
 MyControl.Motion
-  .Anchor(TMotionAnchor.TopCenter)
-  .ScaleY(1.5, 300)
+  .ScaleY(1.5, 300, TMotionAnchor.TopCenter)
   .Start;
 
-// Or custom normalized point:
+// Or chain .Anchor for custom normalized point:
 MyControl.Motion
   .Anchor(PointF(0.2, 0.8))
   .Rotate(45.0, 400)
@@ -319,21 +322,21 @@ function Glow(const AColor: TAlphaColor = $8000A0FF; const ASoftness: Single = 0
 function Shake(const AIntensity: Single = 8.0; const ADurationMs: Cardinal = 350): IMotionBuilder;
 
 // Snappy expanding scale pulse
-function Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280): IMotionBuilder;
+function Pulse(const AScalePeak: Single = 1.12; const ADurationMs: Cardinal = 280; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
 // Playful vertical rebound bounce
 function Bounce(const AHeight: Single = 16.0; const ADurationMs: Cardinal = 320): IMotionBuilder;
 
 // Tactical oscillation resembling iOS home screen edit mode
-function Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350): IMotionBuilder;
+function Wiggle(const AIntensityDeg: Single = 2.5; const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 
 // Edge slides with synchronized opacity fading
 function SlideIn(const ADirection: TTransitionDirection = TTransitionDirection.FromLeft; const ADistance: Single = 0; const ADurationMs: Cardinal = 300): IMotionBuilder;
 function SlideOut(const ADirection: TTransitionDirection = TTransitionDirection.FromRight; const ADistance: Single = 0; const ADurationMs: Cardinal = 300): IMotionBuilder;
 
 // Bouncy spring zoom-in from zero to full scale or vice versa
-function PopIn(const ADurationMs: Cardinal = 350): IMotionBuilder;
-function PopOut(const ADurationMs: Cardinal = 250): IMotionBuilder;
+function PopIn(const ADurationMs: Cardinal = 350; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
+function PopOut(const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 ```
 
 ---

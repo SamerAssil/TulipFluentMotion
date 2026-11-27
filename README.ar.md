@@ -130,21 +130,20 @@ Self.Shake(14.0, 380);
 
 | المؤثر (Modifier) | مكافئ SwiftUI | الوصف وطريقة العمل |
 | :--- | :--- | :--- |
-| **`Scale(Target, Duration)`** | `.scaleEffect` | تكبير أو تصغير العنصر بنسبة محددة (مع دعم `FromScale` و `ScaleX` و `ScaleY`). |
-| **`Move(DeltaX, DeltaY)`** | `.offset` | إزاحة موضع العنصر بمسافة نسبية بالبكسل. |
-| **`MoveTo(TargetX, TargetY)`** | `.position` | تحريك العنصر إلى إحداثيات مطلقة داخل الحاوية. |
-| **`Rotate(TargetAngleDeg)`** | `.rotationEffect` | دوران العنصر بالدرجات مع ارتكاز قابل للضبط (`Anchor`). |
-| **`Flip3D(TargetAngleDeg, Axis)`** | `.rotation3DEffect` | دوران ثلاثي الأبعاد مع منظور حقيقي حول المحور الأفقي أو الرأسي (`FlipHorizontal`, `FlipVertical`). |
-| **`ResizeTo(Width, Height)`** | `.frame(width:height:)` | تحريك الأبعاد الحقيقية للعنصر بسلاسة (لقوائم الأكورديون والنوافذ القابلة للتمدد). |
+| **`Scale(Target, Duration, [Anchor])`** | `.scaleEffect` | تكبير أو تصغير العنصر بنسبة محددة مع دعم نقطة الارتكاز الاختيارية في النهاية (`FromScale`, `ScaleX`, `ScaleY`). |
+| **`Move(DeltaX, DeltaY, [Duration], [Anchor])`** | `.offset` | إزاحة موضع العنصر بمسافة نسبية بالبكسل (`MoveX`, `MoveY`). |
+| **`MoveTo(TargetX, TargetY, [Duration], [Anchor])`** | `.position` | تحريك العنصر إلى إحداثيات مطلقة داخل الحاوية. |
+| **`Rotate(TargetAngleDeg, [Duration], [Anchor])`** | `.rotationEffect` | دوران العنصر بالدرجات مع ارتكاز قابل للضبط (`RotateBy`). |
+| **`Flip3D(TargetAngleDeg, Axis, [Duration], [Anchor])`** | `.rotation3DEffect` | دوران ثلاثي الأبعاد مع منظور حقيقي حول المحور الأفقي أو الرأسي (`FlipHorizontal`, `FlipVertical`). |
+| **`ResizeTo(Width, Height, [Duration], [Anchor])`** | `.frame(width:height:)` | تحريك الأبعاد الحقيقية للعنصر بسلاسة (لقوائم الأكورديون والنوافذ القابلة للتمدد). |
 
 <!-- IMAGE_PLACEHOLDER: Transforms GIF (Scale, MoveTo, Rotate, Flip3D, ResizeTo) -->
 ![Transforms Demo](docs/images/transforms-demo.gif)
 
 ```pascal
-// بطاقة تنقلب أفقياً بزاوية 180 درجة مع نابض حيوي
+// بطاقة تنقلب أفقياً بزاوية 180 درجة مع نابض حيوي وتمرير نقطة الارتكاز مباشرة
 CardProfile.Motion
-  .Anchor(TMotionAnchor.Center)
-  .FlipHorizontal(180.0, 400)
+  .FlipHorizontal(180.0, 400, TMotionAnchor.Center)
   .WithSpring(TFluentSpring.Bouncy)
   .Start;
 ```
