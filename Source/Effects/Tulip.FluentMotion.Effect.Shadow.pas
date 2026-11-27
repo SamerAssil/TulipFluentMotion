@@ -258,12 +258,22 @@ begin
   try
     if CornerRadius > 0.5 then
     begin
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Difference, True);
+      var LRoundRect := TSkRoundRect.Create(ARect, CornerRadius, CornerRadius);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Difference, True);
+      finally
+        LRoundRect.Free;
+      end;
       ACanvas.DrawRoundRect(ShadowRect, CornerRadius, CornerRadius, PaintObj);
     end
     else if Assigned(FControl) and (FControl is TCircle) then
     begin
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5), TSkClipOp.Difference, True);
+      var LRoundRect := TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Difference, True);
+      finally
+        LRoundRect.Free;
+      end;
       ACanvas.DrawOval(ShadowRect, PaintObj);
     end
     else

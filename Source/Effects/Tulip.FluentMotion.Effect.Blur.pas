@@ -157,9 +157,23 @@ begin
   SaveCount := ACanvas.Save;
   try
     if CornerRadius > 0.5 then
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Intersect, True)
+    begin
+      var LRoundRect := TSkRoundRect.Create(ARect, CornerRadius, CornerRadius);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Intersect, True);
+      finally
+        LRoundRect.Free;
+      end;
+    end
     else if Assigned(FControl) and (FControl is TCircle) then
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5), TSkClipOp.Intersect, True)
+    begin
+      var LRoundRect := TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Intersect, True);
+      finally
+        LRoundRect.Free;
+      end;
+    end
     else
       ACanvas.ClipRect(ARect, TSkClipOp.Intersect, True);
 

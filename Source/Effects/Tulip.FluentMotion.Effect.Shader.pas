@@ -567,16 +567,18 @@ uses
   Tulip.FluentMotion.Driver;
 
 type
+  TFluentTargetRemovedEvent = procedure(const ATarget: TControl) of object;
+
   TFluentTargetWatcher = class(TComponent)
   private
-    FOnRemove: TProc<TControl>;
+    FOnRemove: TFluentTargetRemovedEvent;
   protected
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
-    constructor CreateWatcher(const ATargets: TArray<TControl>; const AOnRemove: TProc<TControl>);
+    constructor CreateWatcher(const ATargets: TArray<TControl>; const AOnRemove: TFluentTargetRemovedEvent);
   end;
 
-constructor TFluentTargetWatcher.CreateWatcher(const ATargets: TArray<TControl>; const AOnRemove: TProc<TControl>);
+constructor TFluentTargetWatcher.CreateWatcher(const ATargets: TArray<TControl>; const AOnRemove: TFluentTargetRemovedEvent);
 var
   Ctrl: TControl;
 begin
@@ -831,9 +833,23 @@ begin
   try
     // Smart shape clipping
     if CornerRadius > 0.5 then
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Intersect, True)
+    begin
+      var LRoundRect := TSkRoundRect.Create(ARect, CornerRadius, CornerRadius);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Intersect, True);
+      finally
+        LRoundRect.Free;
+      end;
+    end
     else if Assigned(FControl) and (FControl is TCircle) then
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5), TSkClipOp.Intersect, True)
+    begin
+      var LRoundRect := TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Intersect, True);
+      finally
+        LRoundRect.Free;
+      end;
+    end
     else
       ACanvas.ClipRect(ARect, TSkClipOp.Intersect, True);
 
@@ -1043,9 +1059,23 @@ begin
   OuterSaveCount := ACanvas.Save;
   try
     if CornerRadius > 0.5 then
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, CornerRadius, CornerRadius), TSkClipOp.Intersect, True)
+    begin
+      var LRoundRect := TSkRoundRect.Create(ARect, CornerRadius, CornerRadius);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Intersect, True);
+      finally
+        LRoundRect.Free;
+      end;
+    end
     else if Assigned(FControl) and (FControl is TCircle) then
-      ACanvas.ClipRoundRect(TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5), TSkClipOp.Intersect, True)
+    begin
+      var LRoundRect := TSkRoundRect.Create(ARect, ARect.Width * 0.5, ARect.Height * 0.5);
+      try
+        ACanvas.ClipRoundRect(LRoundRect, TSkClipOp.Intersect, True);
+      finally
+        LRoundRect.Free;
+      end;
+    end
     else
       ACanvas.ClipRect(ARect, TSkClipOp.Intersect, True);
 
