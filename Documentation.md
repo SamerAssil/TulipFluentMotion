@@ -119,6 +119,7 @@ end;
 ```
 
 ### B. Touch & Button Press Feedback (OnMouseDown / OnMouseUp)
+![Touch Button Press Feedback](media/touch_button_press_feeback.gif)
 Replicate iOS and macOS physical button depression:
 ```pascal
 procedure TMainForm.BtnSubmitMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Single);
@@ -135,6 +136,7 @@ end;
 ```
 
 ### C. Touch Ripple Shockwave
+![Touch Ripple Shockwave](media/touch_ripple_shockwave.gif)
 Spawn an authentic water shockwave expanding outward from the precise tap coordinate:
 ```pascal
 procedure TMainForm.PanelSurfaceClick(Sender: TObject);
@@ -153,6 +155,7 @@ end;
 ```
 
 ### D. Input Validation Shake
+![Input Validation Shake](media/input_validation_shake.gif)
 Indicate incorrect passwords, PIN codes, or form errors:
 ```pascal
 procedure TMainForm.ValidateLogin;
@@ -166,6 +169,7 @@ end;
 ```
 
 ### E. Interactive Gesture Scrubbing (.Seek)
+![Interactive Gesture Scrubbing](media/interactive_gesture_scrubbing.gif)
 Directly couple animation progress (`0.0 .. 1.0`) with gestures, scroll offsets, or sliders without starting the ticker loop:
 ```pascal
 procedure TMainForm.TrackBarProgressChange(Sender: TObject);
@@ -186,6 +190,7 @@ end;
 ![Transforms Showcase](docs/images/transforms-guide.png)
 
 ### A. Scaling Modifiers
+![Scaling Modifiers](media/scaling_modifiers.gif)
 ```pascal
 // Uniform scaling across X and Y
 function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
@@ -212,6 +217,7 @@ function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal; c
 ```
 
 ### C. 2D Rotation & 3D Perspective Card Flips
+![2D Rotation & 3D Perspective Card Flips](media/2d_rotation_3d_perspective_card_flips.gif)
 ```pascal
 function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
@@ -223,6 +229,7 @@ function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: 
 ```
 
 ### D. Dynamic Bounds Resizing
+![Dynamic Bounds Resizing](media/dynamic_bounds_resizing.gif)
 Directly interpolates actual control `Width` and `Height` for accordion containers and expandable drawers:
 ```pascal
 function ResizeTo(const ATargetWidth, ATargetHeight: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
@@ -267,6 +274,7 @@ MyControl.Motion
 ![Colors and Filters Demo](docs/images/colors-filters.gif)
 
 ### A. Smart Opacity & Fades
+![Smart Opacity & Fades](media/smart_opacity_fades.gif)
 Evaluates current visibility state: if `FadeIn` is called on a hidden (`Visible = False`) or opaque (`1.0`) control, it resets opacity to `0.0`, enables visibility, and smoothly interpolates to `1.0`:
 ```pascal
 function Fade(const ATargetOpacity: Single; const ADurationMs: Cardinal = 200): IMotionBuilder; overload;
@@ -276,6 +284,7 @@ function FadeOut(const ADurationMs: Cardinal = 200): IMotionBuilder;
 ```
 
 ### B. Color Transitions & Tinting
+![Color Transitions & Tinting](media/color_transitions_tinting.gif)
 Smoothly transitions fill colors on `TShape` controls and text colors on `TTextControl`:
 ```pascal
 function ColorTo(const ATargetColor: TAlphaColor; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
@@ -285,6 +294,7 @@ function Tint(const ATintColor: TAlphaColor; const ADurationMs: Cardinal = 250):
 ```
 
 ### C. Grayscale & Hue Rotation
+![Grayscale & Hue Rotation](media/grayscale_hue_rotation.gif)
 ```pascal
 function Grayscale(const ATargetAmount: Single = 1.0; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
 function Grayscale(const AFromAmount, ATargetAmount: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
@@ -296,6 +306,8 @@ function HueRotation(const ATargetAngleDeg: Single = 360.0; const ADurationMs: C
 ```
 
 ### D. Blur, Elevation & Glow
+![Elevation & Glow](media/elevation_glow.gif)
+![Blur Filter](media/blur.gif)
 ```pascal
 // Hardware-accelerated gaussian blur
 function Blur(const ATargetSoftness: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
@@ -314,8 +326,7 @@ function Glow(const AColor: TAlphaColor = $8000A0FF; const ASoftness: Single = 0
 
 ## 6. Micro-Interactions & Quick Transitions
 
-<!-- IMAGE_PLACEHOLDER: Micro-Interactions Showcase (Shake, Pulse, Bounce, Wiggle, Slide, Pop) -->
-![Micro-Interactions Showcase](docs/images/micro-actions.gif)
+![Micro-Interactions Showcase](media/shake_puls_bounce_wiggle_popin.gif)
 
 ```pascal
 // Damped harmonic shake for form validation errors
@@ -345,10 +356,10 @@ function PopOut(const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor 
 
 Compiled directly to GPU bytecode using Skia Shading Language (`SkSL`):
 
-<!-- IMAGE_PLACEHOLDER: All 9 SkSL Shaders Showcase GIF Matrix -->
-![SkSL Shaders Matrix](docs/images/sksl-matrix.gif)
+![SkSL Shaders Matrix](media/borderbeam_dissolveburn_ripple_liquidwave_gooeyMetaball_.gif)
 
 ### 1. Glass, Liquid Glass & Liquid Glass Group (`Glass`, `LiquidGlass`, `LiquidGlassGroup`)
+![Liquid Glass Demo](media/LiguidGlass.gif)
 Emulates Apple Liquid Glass and macOS/visionOS optics using a two-pass hardware Gaussian blur (`TSkImageFilter.MakeBlur`) fed into a SkSL refraction shader (`Backdrop Refraction`), with RGB chromatic dispersion, 3D specular rim highlights, and interactive cursor/touch lensing:
 
 ```pascal
@@ -396,6 +407,7 @@ Circle1.Motion.MoveTo(Circle2.Position.X - 15, Circle2.Position.Y, 800).Start;
 ---
 
 ### 2. Mesh Gradient (`MeshGradient`)
+![Mesh Gradient](media/mesh_gradient.gif)
 4-point generative color mesh undulating smoothly across time:
 ```pascal
 function MeshGradient(
@@ -503,6 +515,7 @@ function GooeyMetaball(
 ---
 
 ### 9. Custom SkSL Shader (`CustomShader`)
+![Custom SkSL Shader](media/custom_shader.gif)
 Inject arbitrary SkSL source code and supply dynamic runtime uniforms:
 ```pascal
 function CustomShader(

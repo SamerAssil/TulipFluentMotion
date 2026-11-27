@@ -123,6 +123,7 @@ end;
 ```
 
 ### ب. تفاعل الضغط والارتداد (Button Press: OnMouseDown / OnMouseUp)
+![تفاعل الضغط والارتداد](media/touch_button_press_feeback.gif)
 محاكاة انضغاط الأزرار في نظامي iOS و macOS:
 ```pascal
 procedure TMainForm.BtnSubmitMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Single);
@@ -139,6 +140,7 @@ end;
 ```
 
 ### ج. تموج مائي انكساري عند النقر (Touch Ripple)
+![تموج مائي انكساري](media/touch_ripple_shockwave.gif)
 انطلاق موجة تموج مائية دائرية حية من موقع النقر الدقيق:
 ```pascal
 procedure TMainForm.PanelSurfaceClick(Sender: TObject);
@@ -157,6 +159,7 @@ end;
 ```
 
 ### د. اهتزاز التحقق عند الخطأ (Validation Error Shake)
+![اهتزاز التحقق عند الخطأ](media/input_validation_shake.gif)
 ```pascal
 procedure TMainForm.ValidateLogin;
 begin
@@ -169,6 +172,7 @@ end;
 ```
 
 ### هـ. التحكم التفاعلي مع السحب والإيماءات (Interactive Scrubbing / Seek)
+![التحكم التفاعلي مع السحب](media/interactive_gesture_scrubbing.gif)
 يمكن ربط تقدم الحركة (0.0 .. 1.0) مباشرة مع حدث تحريك شريط التمرير أو سحب الإصبع دون تشغيل المؤقت:
 ```pascal
 procedure TMainForm.TrackBarProgressChange(Sender: TObject);
@@ -189,6 +193,7 @@ end;
 ![Transforms Showcase](docs/images/transforms-guide.png)
 
 ### أ. التحجيم والتكبير (Scale)
+![التحجيم والتكبير](media/scaling_modifiers.gif)
 ```pascal
 // تكبير متجانس لكلا المحورين
 function Scale(const ATargetScale: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder; overload;
@@ -215,6 +220,7 @@ function MoveTo(const ATargetX, ATargetY: Single; const ADurationMs: Cardinal; c
 ```
 
 ### ج. الدوران والانقلاب ثلاثي الأبعاد (Rotate & 3D Flip)
+![الدوران والانقلاب ثلاثي الأبعاد](media/2d_rotation_3d_perspective_card_flips.gif)
 ```pascal
 function Rotate(const ATargetAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
 function RotateBy(const ADeltaAngleDeg: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
@@ -226,6 +232,7 @@ function FlipVertical(const ATargetAngleDeg: Single = 180.0; const ADurationMs: 
 ```
 
 ### د. تعديل الأبعاد الحقيقية (Dynamic Bounds Resizing)
+![تعديل الأبعاد الحقيقية](media/dynamic_bounds_resizing.gif)
 تستخدم لقوائم الأكورديون، القوائم الجانبية، والبطاقات التفاعلية دون تشويه نسبة أبعاد المحتوى الداخلي:
 ```pascal
 function ResizeTo(const ATargetWidth, ATargetHeight: Single; const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor = TMotionAnchor.Center): IMotionBuilder;
@@ -270,6 +277,7 @@ MyControl.Motion
 ![Colors and Filters Demo](docs/images/colors-filters.gif)
 
 ### أ. التلاشي والظهور الذكي (Smart Opacity & Fade)
+![التلاشي والظهور الذكي](media/smart_opacity_fades.gif)
 تتميز المكتبة بآلية الكشف الذكي عن الحالة: إذا تم استدعاء `FadeIn` على عنصر مخفي (`Visible = False`) أو كانت شفافيته `1.0`، تقوم تلقائياً ببدء الشفافية من `0.0` وإظهار العنصر وتدرجه بسلاسة حتى `1.0`:
 ```pascal
 function Fade(const ATargetOpacity: Single; const ADurationMs: Cardinal = 200): IMotionBuilder; overload;
@@ -279,6 +287,7 @@ function FadeOut(const ADurationMs: Cardinal = 200): IMotionBuilder;
 ```
 
 ### ب. الانتقال اللوني والصبغات (Color Transition & Tint)
+![الانتقال اللوني والصبغات](media/color_transitions_tinting.gif)
 الانتقال السلس لألوان خلفية الأشكال (`TShape`) والنصوص (`TTextControl`):
 ```pascal
 function ColorTo(const ATargetColor: TAlphaColor; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
@@ -288,6 +297,7 @@ function Tint(const ATintColor: TAlphaColor; const ADurationMs: Cardinal = 250):
 ```
 
 ### ج. أبيض وأسود وتدوير عجلة الألوان (Grayscale & Hue Rotation)
+![أبيض وأسود وتدوير الألوان](media/grayscale_hue_rotation.gif)
 ```pascal
 function Grayscale(const ATargetAmount: Single = 1.0; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
 function Grayscale(const AFromAmount, ATargetAmount: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
@@ -299,6 +309,8 @@ function HueRotation(const ATargetAngleDeg: Single = 360.0; const ADurationMs: C
 ```
 
 ### د. الضبابية، الظلال، والتوهج (Blur, Shadow & Glow)
+![الظلال والتوهج](media/elevation_glow.gif)
+![فلتر الضبابية](media/blur.gif)
 ```pascal
 // ضبابية غاوسية مسرعة عتادياً
 function Blur(const ATargetSoftness: Single; const ADurationMs: Cardinal = 250): IMotionBuilder; overload;
@@ -317,8 +329,7 @@ function Glow(const AColor: TAlphaColor = $8000A0FF; const ASoftness: Single = 0
 
 ## 6. حركات الانتقال السريع والميكروية (Micro-Interactions & Transitions)
 
-<!-- IMAGE_PLACEHOLDER: Micro-Interactions Showcase (Shake, Pulse, Bounce, Wiggle, Slide, Pop) -->
-![Micro-Interactions Showcase](docs/images/micro-actions.gif)
+![حركات الانتقال السريع والميكروية](media/shake_puls_bounce_wiggle_popin.gif)
 
 ```pascal
 // اهتزاز توافقي للتنبيه عن الأخطاء وكلمات المرور الخاطئة
@@ -348,10 +359,10 @@ function PopOut(const ADurationMs: Cardinal = 250; const AAnchor: TMotionAnchor 
 
 تعمل هذه المؤثرات مباشرة داخل معالج الرسوميات GPU عبر لغة تظليل Skia (`SkSL`).
 
-<!-- IMAGE_PLACEHOLDER: All 9 SkSL Shaders Showcase GIF Matrix -->
-![SkSL Shaders Matrix](docs/images/sksl-matrix.gif)
+![معرض شيدرات SkSL](media/borderbeam_dissolveburn_ripple_liquidwave_gooeyMetaball_.gif)
 
 ### 1. الزجاج البصري والزجاج السائل ودمج الأجسام (`Glass`, `LiquidGlass`, `LiquidGlassGroup`)
+![الزجاج السائل](media/LiguidGlass.gif)
 يحاكي زجاج Apple Liquid Glass عبر دمج تمريرتين على الـ GPU: تضبيب Gaussian حقيقي (`TSkImageFilter.MakeBlur`) متبوعاً بشيدر SkSL للانكسار العدسي والتشتت اللوني للأطياف RGB ولمعان الحواف ثلاثي الأبعاد والتفاعل مع المؤشر:
 
 ```pascal
@@ -399,6 +410,7 @@ Circle1.Motion.MoveTo(Circle2.Position.X - 15, Circle2.Position.Y, 800).Start;
 ---
 
 ### 2. التدرج الشبكي المورفي (Mesh Gradient)
+![التدرج الشبكي](media/mesh_gradient.gif)
 شبكة لونية هلامية تتدفق وتتموج ألوانها الأربعة عبر الزمن:
 ```pascal
 function MeshGradient(
@@ -506,6 +518,7 @@ function GooeyMetaball(
 ---
 
 ### 9. شيدر مخصص كامل (Custom SkSL Shader)
+![شيدر مخصص](media/custom_shader.gif)
 إمكانية حقن كود SkSL حر وتمرير متغيرات حية (Uniforms):
 ```pascal
 function CustomShader(
