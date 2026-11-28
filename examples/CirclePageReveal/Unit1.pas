@@ -18,6 +18,7 @@ type
     Layout1: TLayout;
     Painting1: TRectangle;
     Painting2: TRectangle;
+    Text1: TText;
     procedure Circle1Click(Sender: TObject);
     procedure Circle2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
