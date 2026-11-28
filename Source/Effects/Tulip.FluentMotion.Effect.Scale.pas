@@ -26,6 +26,8 @@ type
     FInitialPosY: Single;
     FBasePosX: Single;
     FBasePosY: Single;
+    FLastAnchorOffsetX: Single;
+    FLastAnchorOffsetY: Single;
     FAutoCaptureFrom: Boolean;
     FSuppressPositionUpdate: Boolean;
   protected
@@ -155,9 +157,11 @@ begin
     CurScaleX := TControlAccess(FControl).Scale.X;
     CurScaleY := TControlAccess(FControl).Scale.Y;
 
-    // Calculate unscaled base position
+    // Calculate unscaled base position (used by RestoreInitialState)
     FBasePosX := FControl.Position.X + (FControl.Width * (CurScaleX - 1.0) * AnchorPt.X);
     FBasePosY := FControl.Position.Y + (FControl.Height * (CurScaleY - 1.0) * AnchorPt.Y);
+    FLastAnchorOffsetX := 0.0;
+    FLastAnchorOffsetY := 0.0;
 
     if FIsReversed then
       Exit;
@@ -182,11 +186,10 @@ begin
 
       if not FSuppressPositionUpdate and ((AnchorPt.X <> 0) or (AnchorPt.Y <> 0)) then
       begin
-        if SameValue(CurScaleX, FTargetScaleX, 0.001) or SameValue(CurScaleY, FTargetScaleY, 0.001) then
-        begin
-          FControl.Position.X := FBasePosX - (FControl.Width * (TControlAccess(FControl).Scale.X - 1.0) * AnchorPt.X);
-          FControl.Position.Y := FBasePosY - (FControl.Height * (TControlAccess(FControl).Scale.Y - 1.0) * AnchorPt.Y);
-        end;
+        if not SameValue(TControlAccess(FControl).Scale.X, CurScaleX, 0.0001) then
+          FControl.Position.X := FControl.Position.X - (FControl.Width * (TControlAccess(FControl).Scale.X - CurScaleX) * AnchorPt.X);
+        if not SameValue(TControlAccess(FControl).Scale.Y, CurScaleY, 0.0001) then
+          FControl.Position.Y := FControl.Position.Y - (FControl.Height * (TControlAccess(FControl).Scale.Y - CurScaleY) * AnchorPt.Y);
       end;
     end
     else
@@ -195,8 +198,10 @@ begin
       TControlAccess(FControl).Scale.Y := FFromScaleY;
       if not FSuppressPositionUpdate and ((AnchorPt.X <> 0) or (AnchorPt.Y <> 0)) then
       begin
-        FControl.Position.X := FBasePosX - (FControl.Width * (FFromScaleX - 1.0) * AnchorPt.X);
-        FControl.Position.Y := FBasePosY - (FControl.Height * (FFromScaleY - 1.0) * AnchorPt.Y);
+        if not SameValue(FFromScaleX, CurScaleX, 0.0001) then
+          FControl.Position.X := FControl.Position.X - (FControl.Width * (FFromScaleX - CurScaleX) * AnchorPt.X);
+        if not SameValue(FFromScaleY, CurScaleY, 0.0001) then
+          FControl.Position.Y := FControl.Position.Y - (FControl.Height * (FFromScaleY - CurScaleY) * AnchorPt.Y);
       end;
     end;
   end;
@@ -205,6 +210,7 @@ end;
 procedure TFluentScaleEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
 var
   CurX, CurY: Single;
+  NewOffsetX, NewOffsetY: Single;
   AnchorPt: TPointF;
 begin
   if not Assigned(FControl) then
@@ -218,8 +224,14 @@ begin
     AnchorPt := FAnchor.ToPointF(FCustomAnchorPoint);
     if (AnchorPt.X <> 0) or (AnchorPt.Y <> 0) then
     begin
-      FControl.Position.X := FBasePosX - (FControl.Width * (CurX - 1.0) * AnchorPt.X);
-      FControl.Position.Y := FBasePosY - (FControl.Height * (CurY - 1.0) * AnchorPt.Y);
+      NewOffsetX := -FControl.Width * (CurX - FFromScaleX) * AnchorPt.X;
+      NewOffsetY := -FControl.Height * (CurY - FFromScaleY) * AnchorPt.Y;
+      if not SameValue(NewOffsetX, FLastAnchorOffsetX, 0.0) then
+        FControl.Position.X := FControl.Position.X + (NewOffsetX - FLastAnchorOffsetX);
+      if not SameValue(NewOffsetY, FLastAnchorOffsetY, 0.0) then
+        FControl.Position.Y := FControl.Position.Y + (NewOffsetY - FLastAnchorOffsetY);
+      FLastAnchorOffsetX := NewOffsetX;
+      FLastAnchorOffsetY := NewOffsetY;
     end;
   end;
 

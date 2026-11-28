@@ -1,0 +1,139 @@
+object MainForm: TMainForm
+  Left = 0
+  Top = 0
+  Caption = 'AI Voice Orb'
+  ClientHeight = 844
+  ClientWidth = 390
+  Fill.Color = xFF07070C
+  Fill.Kind = Solid
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  DesignerMasterStyle = 0
+  object LayoutRoot: TLayout
+    Align = Client
+    Padding.Left = 20.000000000000000000
+    Padding.Top = 36.000000000000000000
+    Padding.Right = 20.000000000000000000
+    Padding.Bottom = 24.000000000000000000
+    Size.Width = 390.000000000000000000
+    Size.Height = 844.000000000000000000
+    Size.PlatformDefault = False
+    object LabelTitle: TLabel
+      Align = Top
+      Size.Width = 350.000000000000000000
+      Size.Height = 38.000000000000000000
+      Size.PlatformDefault = False
+      StyledSettings = []
+      TextSettings.Font.Size = 22.000000000000000000
+      TextSettings.Font.Style = [fsBold]
+      TextSettings.FontColor = xFFF8FAFC
+      TextSettings.HorzAlign = Center
+      Text = #1575#1604#1605#1587#1575#1593#1583' '#1575#1604#1584#1603#1610' — Tulip AI'
+    end
+    object LabelStatus: TLabel
+      Align = Top
+      Size.Width = 350.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyledSettings = []
+      TextSettings.Font.Size = 14.000000000000000000
+      TextSettings.FontColor = xFFA78BFA
+      TextSettings.HorzAlign = Center
+      Text = #1575#1590#1594#1591' '#1593#1604#1609' '#1575#1604#1603#1585#1577' '#1571#1608' '#1575#1603#1578#1576' '#1587#1572#1575#1604#1603'...'
+    end
+    object LayoutOrbContainer: TLayout
+      Align = Top
+      Margins.Top = 18.000000000000000000
+      Size.Width = 350.000000000000000000
+      Size.Height = 220.000000000000000000
+      Size.PlatformDefault = False
+      object RectOrb: TRectangle
+        Align = Center
+        Cursor = crHandPoint
+        Fill.Color = xFF1E1B4B
+        Size.Width = 170.000000000000000000
+        Size.Height = 170.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Color = x808B5CF6
+        Stroke.Thickness = 2.000000000000000000
+        XRadius = 85.000000000000000000
+        YRadius = 85.000000000000000000
+        OnClick = RectOrbClick
+        object LabelOrb: TLabel
+          Align = Client
+          HitTest = False
+          StyledSettings = []
+          TextSettings.Font.Size = 16.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = claWhite
+          TextSettings.HorzAlign = Center
+          Text = #1578#1581#1583#1617#1579' '#1575#1604#1570#1606
+        end
+      end
+    end
+    object RectAnswerCard: TRectangle
+      Align = Client
+      Fill.Color = xFF11111B
+      Margins.Top = 14.000000000000000000
+      Margins.Bottom = 16.000000000000000000
+      Padding.Left = 18.000000000000000000
+      Padding.Top = 18.000000000000000000
+      Padding.Right = 18.000000000000000000
+      Padding.Bottom = 18.000000000000000000
+      Size.Width = 350.000000000000000000
+      Size.Height = 400.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Color = x308B5CF6
+      XRadius = 24.000000000000000000
+      YRadius = 24.000000000000000000
+      object LabelResponse: TLabel
+        Align = Client
+        StyledSettings = []
+        TextSettings.Font.Size = 17.000000000000000000
+        TextSettings.FontColor = xFFE2E8F0
+        TextSettings.HorzAlign = Trailing
+        TextSettings.VertAlign = Leading
+        TextSettings.WordWrap = True
+        Text = #1605#1585#1581#1576#1575#1611'! '#1571#1606#1575' '#1605#1587#1575#1593#1583#1603' '#1575#1604#1584#1603#1610'. '#1575#1590#1594#1591' '#1593#1604#1609' '#1575#1604#1603#1585#1577' '#1575#1604#1605#1578#1608#1607#1580#1577' '#1604#1578#1580#1585#1576#1577' '#1603#1578#1575#1576#1577' '#1575#1604#1606#1589' '#1575#1604#1593#1585#1576#1610' '#1576#1587#1604#1575#1587#1577' '#1605#1593' '#1588#1593#1575#1593' '#1575#1604#1581#1608#1575#1601'.'
+      end
+    end
+    object LayoutInput: TLayout
+      Align = Bottom
+      Size.Width = 350.000000000000000000
+      Size.Height = 52.000000000000000000
+      Size.PlatformDefault = False
+      object BtnSend: TRectangle
+        Align = Left
+        Cursor = crHandPoint
+        Fill.Color = xFF7C3AED
+        Margins.Right = 10.000000000000000000
+        Size.Width = 86.000000000000000000
+        Size.Height = 52.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Kind = None
+        XRadius = 16.000000000000000000
+        YRadius = 16.000000000000000000
+        OnClick = BtnSendClick
+        object LabelSend: TLabel
+          Align = Client
+          HitTest = False
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = claWhite
+          TextSettings.HorzAlign = Center
+          Text = #1573#1585#1587#1575#1604
+        end
+      end
+      object EditPrompt: TEdit
+        Align = Client
+        TextPrompt = #1575#1603#1578#1576' '#1587#1572#1575#1604#1603' '#1607#1606#1575'...'
+        Size.Width = 254.000000000000000000
+        Size.Height = 52.000000000000000000
+        Size.PlatformDefault = False
+      end
+    end
+  end
+end

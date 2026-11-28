@@ -75,6 +75,8 @@ type
     function Speed(const ASpeed: Single): IMotionBuilder;
     function WithEase(const AEase: TFluentEase): IMotionBuilder;
     function WithSpring(const ASpring: TFluentSpring): IMotionBuilder;
+    function PhaseEase(const AEase: TFluentEase): IMotionBuilder;
+    function PhaseSpring(const ASpring: TFluentSpring): IMotionBuilder;
     function WithAngle(const AAngleDeg: Single): IMotionBuilder;
     function RepeatCount(const ACount: Integer): IMotionBuilder;
     function RepeatForever(const AAutoreverse: Boolean = True): IMotionBuilder;
@@ -198,6 +200,7 @@ type
     { Phasing & Delays }
     function Wait(const AWaitMs: Cardinal): IMotionBuilder;
     function &Then: IMotionBuilder;
+    function ThenDo(const ACallback: TMotionCallback): IMotionBuilder;
 
     { Callbacks }
     function OnProgress(const ACallback: TMotionProgressCallback): IMotionBuilder;
@@ -357,6 +360,42 @@ end;
 
 function TFluentMotionBuilder.WithEase(const AEase: TFluentEase): IMotionBuilder;
 var
+  Eff: IMotionEffect;
+begin
+  if Assigned(FCurrentPhase) and (FCurrentPhase.GetEffectsCount > 0) then
+  begin
+    Eff := FCurrentPhase.GetEffect(FCurrentPhase.GetEffectsCount - 1);
+    if Eff is TFluentMotionEffectBase then
+      TFluentMotionEffectBase(Eff).SetEase(AEase);
+  end
+  else
+  begin
+    FCurrentEase := AEase;
+    FUseSpring := False;
+  end;
+  Result := Self;
+end;
+
+function TFluentMotionBuilder.WithSpring(const ASpring: TFluentSpring): IMotionBuilder;
+var
+  Eff: IMotionEffect;
+begin
+  if Assigned(FCurrentPhase) and (FCurrentPhase.GetEffectsCount > 0) then
+  begin
+    Eff := FCurrentPhase.GetEffect(FCurrentPhase.GetEffectsCount - 1);
+    if Eff is TFluentMotionEffectBase then
+      TFluentMotionEffectBase(Eff).SetSpring(ASpring);
+  end
+  else
+  begin
+    FCurrentSpring := ASpring;
+    FUseSpring := True;
+  end;
+  Result := Self;
+end;
+
+function TFluentMotionBuilder.PhaseEase(const AEase: TFluentEase): IMotionBuilder;
+var
   I: Integer;
   Eff: IMotionEffect;
 begin
@@ -374,7 +413,7 @@ begin
   Result := Self;
 end;
 
-function TFluentMotionBuilder.WithSpring(const ASpring: TFluentSpring): IMotionBuilder;
+function TFluentMotionBuilder.PhaseSpring(const ASpring: TFluentSpring): IMotionBuilder;
 var
   I: Integer;
   Eff: IMotionEffect;
@@ -1238,6 +1277,20 @@ begin
   FCurrentDurationMs := 250;
   FAnchorExplicitlySet := False;
   Result := Self;
+end;
+
+function TFluentMotionBuilder.ThenDo(const ACallback: TMotionCallback): IMotionBuilder;
+var
+  Eff: TFluentActionEffect;
+begin
+  if Assigned(FCurrentPhase) and (FCurrentPhase.GetEffectsCount > 0) then
+    &Then;
+
+  Eff := TFluentActionEffect.Create(ACallback);
+  AddConfiguredEffect(Eff);
+
+  // Advance to a fresh phase so subsequent effects run after the callback
+  Result := &Then;
 end;
 
 function TFluentMotionBuilder.OnProgress(const ACallback: TMotionProgressCallback): IMotionBuilder;

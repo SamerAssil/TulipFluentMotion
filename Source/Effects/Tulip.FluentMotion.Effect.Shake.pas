@@ -19,6 +19,7 @@ type
     FFrequency: Single;     // Number of full oscillations
     FInitialX: Single;
     FInitialY: Single;
+    FLastOffsetX: Single;
   protected
     procedure DoAttach; override;
     procedure DoStart; override;
@@ -77,6 +78,7 @@ procedure TFluentShakeEffect.DoStart;
 begin
   PrepareLayoutOverride;
   CaptureInitialState;
+  FLastOffsetX := 0.0;
 end;
 
 procedure TFluentShakeEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
@@ -91,18 +93,27 @@ begin
   // Damped sinusoidal wave
   Offset := FIntensity * Decay * Sin(AProgress * (2.0 * Pi * FFrequency));
 
-  FControl.Position.X := FInitialX + Offset;
+  FControl.Position.X := FControl.Position.X + (Offset - FLastOffsetX);
+  FLastOffsetX := Offset;
 end;
 
 procedure TFluentShakeEffect.DoFinish;
 begin
-  RestoreInitialState;
+  if Assigned(FControl) and (FLastOffsetX <> 0.0) then
+  begin
+    FControl.Position.X := FControl.Position.X - FLastOffsetX;
+    FLastOffsetX := 0.0;
+  end;
   RestoreLayoutOverride;
 end;
 
 procedure TFluentShakeEffect.DoReset;
 begin
-  RestoreInitialState;
+  if Assigned(FControl) and (FLastOffsetX <> 0.0) then
+  begin
+    FControl.Position.X := FControl.Position.X - FLastOffsetX;
+    FLastOffsetX := 0.0;
+  end;
   RestoreLayoutOverride;
 end;
 

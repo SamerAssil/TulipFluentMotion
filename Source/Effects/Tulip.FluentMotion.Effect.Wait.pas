@@ -20,6 +20,19 @@ type
     function Clone: IMotionEffect; override;
   end;
 
+  { Action Effect (Inline callback executed between sequential phases) }
+  TFluentActionEffect = class(TFluentMotionEffectBase)
+  private
+    FCallback: TMotionCallback;
+    FExecuted: Boolean;
+  protected
+    procedure DoStart; override;
+    procedure DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single); override;
+  public
+    constructor Create(const ACallback: TMotionCallback); reintroduce;
+    function Clone: IMotionEffect; override;
+  end;
+
 implementation
 
 { TFluentWaitEffect }
@@ -40,6 +53,40 @@ var
   Res: TFluentWaitEffect;
 begin
   Res := TFluentWaitEffect.Create(FDurationMs);
+  Res.FDelayMs := FDelayMs;
+  Result := Res;
+end;
+
+{ TFluentActionEffect }
+
+constructor TFluentActionEffect.Create(const ACallback: TMotionCallback);
+begin
+  inherited Create(1);
+  FCallback := ACallback;
+  FExecuted := False;
+  FEase := TFluentEase.Linear;
+end;
+
+procedure TFluentActionEffect.DoStart;
+begin
+  FExecuted := False;
+end;
+
+procedure TFluentActionEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
+begin
+  if not FExecuted then
+  begin
+    FExecuted := True;
+    if Assigned(FCallback) then
+      FCallback();
+  end;
+end;
+
+function TFluentActionEffect.Clone: IMotionEffect;
+var
+  Res: TFluentActionEffect;
+begin
+  Res := TFluentActionEffect.Create(FCallback);
   Res.FDelayMs := FDelayMs;
   Result := Res;
 end;

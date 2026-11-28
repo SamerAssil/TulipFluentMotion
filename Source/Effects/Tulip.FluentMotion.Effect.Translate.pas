@@ -29,6 +29,8 @@ type
     FTargetAnchorY: Single;
     FInitialX: Single;
     FInitialY: Single;
+    FLastOffsetX: Single;
+    FLastOffsetY: Single;
     FMode: TTranslateMode;
   protected
     procedure DoAttach; override;
@@ -116,6 +118,8 @@ var
   AnchorPt: TPointF;
 begin
   PrepareLayoutOverride;
+  FLastOffsetX := 0.0;
+  FLastOffsetY := 0.0;
   if Assigned(FControl) then
   begin
     AnchorPt := FAnchor.ToPointF(FCustomAnchorPoint);
@@ -131,35 +135,41 @@ begin
     begin
       FTargetAnchorX := FRawTargetX;
       FTargetAnchorY := FRawTargetY;
+      FDeltaX := FTargetAnchorX - FStartAnchorX;
+      FDeltaY := FTargetAnchorY - FStartAnchorY;
     end;
   end;
 end;
 
 procedure TFluentTranslateEffect.DoUpdate(const AProgress: Single; const AElapsedTimeSec: Single);
 var
-  CurAnchorX, CurAnchorY: Single;
-  AnchorPt: TPointF;
+  CurOffsetX, CurOffsetY: Single;
 begin
   if not Assigned(FControl) then
     Exit;
 
-  AnchorPt := FAnchor.ToPointF(FCustomAnchorPoint);
-  CurAnchorX := FStartAnchorX + (FTargetAnchorX - FStartAnchorX) * AProgress;
-  CurAnchorY := FStartAnchorY + (FTargetAnchorY - FStartAnchorY) * AProgress;
+  CurOffsetX := FDeltaX * AProgress;
+  CurOffsetY := FDeltaY * AProgress;
 
-  FControl.Position.X := CurAnchorX - (FControl.Width * TControlAccess(FControl).Scale.X * AnchorPt.X);
-  FControl.Position.Y := CurAnchorY - (FControl.Height * TControlAccess(FControl).Scale.Y * AnchorPt.Y);
+  if not SameValue(CurOffsetX, FLastOffsetX, 0.0) then
+    FControl.Position.X := FControl.Position.X + (CurOffsetX - FLastOffsetX);
+  if not SameValue(CurOffsetY, FLastOffsetY, 0.0) then
+    FControl.Position.Y := FControl.Position.Y + (CurOffsetY - FLastOffsetY);
+
+  FLastOffsetX := CurOffsetX;
+  FLastOffsetY := CurOffsetY;
 end;
 
 procedure TFluentTranslateEffect.DoFinish;
-var
-  AnchorPt: TPointF;
 begin
   if Assigned(FControl) then
   begin
-    AnchorPt := FAnchor.ToPointF(FCustomAnchorPoint);
-    FControl.Position.X := FTargetAnchorX - (FControl.Width * TControlAccess(FControl).Scale.X * AnchorPt.X);
-    FControl.Position.Y := FTargetAnchorY - (FControl.Height * TControlAccess(FControl).Scale.Y * AnchorPt.Y);
+    if not SameValue(FDeltaX, FLastOffsetX, 0.0) then
+      FControl.Position.X := FControl.Position.X + (FDeltaX - FLastOffsetX);
+    if not SameValue(FDeltaY, FLastOffsetY, 0.0) then
+      FControl.Position.Y := FControl.Position.Y + (FDeltaY - FLastOffsetY);
+    FLastOffsetX := FDeltaX;
+    FLastOffsetY := FDeltaY;
     if SameValue(FControl.Position.X, FInitialX, 0.5) and SameValue(FControl.Position.Y, FInitialY, 0.5) then
       RestoreLayoutOverride;
   end;

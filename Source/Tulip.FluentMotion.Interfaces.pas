@@ -114,6 +114,8 @@ type
     function Speed(const ASpeed: Single): IMotionBuilder;
     function WithEase(const AEase: TFluentEase): IMotionBuilder;
     function WithSpring(const ASpring: TFluentSpring): IMotionBuilder;
+    function PhaseEase(const AEase: TFluentEase): IMotionBuilder;
+    function PhaseSpring(const ASpring: TFluentSpring): IMotionBuilder;
     function WithAngle(const AAngleDeg: Single): IMotionBuilder;
     function RepeatCount(const ACount: Integer): IMotionBuilder;
     function RepeatForever(const AAutoreverse: Boolean = True): IMotionBuilder;
@@ -237,6 +239,7 @@ type
     { Silence & Phasing }
     function Wait(const AWaitMs: Cardinal): IMotionBuilder;
     function &Then: IMotionBuilder;
+    function ThenDo(const ACallback: TMotionCallback): IMotionBuilder;
 
     { Callbacks }
     function OnProgress(const ACallback: TMotionProgressCallback): IMotionBuilder;

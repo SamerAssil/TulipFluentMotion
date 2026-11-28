@@ -112,9 +112,7 @@ begin
   for Effect in FEffects do
   begin
     if Effect is TFluentResizeEffect then
-      TFluentResizeEffect(Effect).SuppressPositionUpdate := HasTranslate
-    else if Effect is TFluentScaleEffect then
-      TFluentScaleEffect(Effect).SuppressPositionUpdate := HasTranslate;
+      TFluentResizeEffect(Effect).SuppressPositionUpdate := HasTranslate;
   end;
 
   if HasTranslate and (FEffects.Count > 1) then

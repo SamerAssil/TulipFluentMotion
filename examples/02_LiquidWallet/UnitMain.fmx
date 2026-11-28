@@ -1,0 +1,308 @@
+object MainForm: TMainForm
+  Left = 0
+  Top = 0
+  Caption = 'Liquid Wallet'
+  ClientHeight = 844
+  ClientWidth = 390
+  Fill.Color = xFF090D16
+  Fill.Kind = Solid
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  DesignerMasterStyle = 0
+  object RectMeshBg: TRectangle
+    Align = Client
+    Fill.Kind = None
+    HitTest = False
+    Size.Width = 390.000000000000000000
+    Size.Height = 844.000000000000000000
+    Size.PlatformDefault = False
+    Stroke.Kind = None
+  end
+  object LayoutRoot: TLayout
+    Align = Client
+    Padding.Left = 20.000000000000000000
+    Padding.Top = 36.000000000000000000
+    Padding.Right = 20.000000000000000000
+    Padding.Bottom = 24.000000000000000000
+    Size.Width = 390.000000000000000000
+    Size.Height = 844.000000000000000000
+    Size.PlatformDefault = False
+    object LabelHeader: TLabel
+      Align = Top
+      Size.Width = 350.000000000000000000
+      Size.Height = 40.000000000000000000
+      Size.PlatformDefault = False
+      StyledSettings = []
+      TextSettings.Font.Size = 22.000000000000000000
+      TextSettings.Font.Style = [fsBold]
+      TextSettings.FontColor = claWhite
+      TextSettings.HorzAlign = Center
+      Text = #1575#1604#1605#1581#1601#1592#1577' '#1575#1604#1584#1603#1610#1577
+    end
+    object RectCard: TRectangle
+      Align = Top
+      Cursor = crHandPoint
+      Fill.Color = x30FFFFFF
+      Margins.Top = 14.000000000000000000
+      Padding.Left = 22.000000000000000000
+      Padding.Top = 20.000000000000000000
+      Padding.Right = 22.000000000000000000
+      Padding.Bottom = 20.000000000000000000
+      Size.Width = 350.000000000000000000
+      Size.Height = 210.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Color = x55FFFFFF
+      Stroke.Thickness = 1.500000000000000000
+      XRadius = 26.000000000000000000
+      YRadius = 26.000000000000000000
+      OnClick = RectCardClick
+      object LayoutCardFront: TLayout
+        Align = Client
+        HitTest = False
+        Size.Width = 306.000000000000000000
+        Size.Height = 170.000000000000000000
+        Size.PlatformDefault = False
+        object LabelTier: TLabel
+          Align = Top
+          Size.Width = 306.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          StyledSettings = []
+          TextSettings.Font.Size = 13.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = xFFBAE6FD
+          Text = 'TULIP PLATINUM CARD'
+        end
+        object LabelBalanceTitle: TLabel
+          Align = Top
+          Margins.Top = 14.000000000000000000
+          Size.Width = 306.000000000000000000
+          Size.Height = 22.000000000000000000
+          Size.PlatformDefault = False
+          StyledSettings = []
+          TextSettings.Font.Size = 13.000000000000000000
+          TextSettings.FontColor = xCCFFFFFF
+          Text = #1575#1604#1585#1589#1610#1583' '#1575#1604#1605#1578#1575#1581
+        end
+        object LabelBalance: TLabel
+          Align = Top
+          Size.Width = 306.000000000000000000
+          Size.Height = 52.000000000000000000
+          Size.PlatformDefault = False
+          StyledSettings = []
+          TextSettings.Font.Size = 36.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = claWhite
+          Text = '$4,850.00'
+        end
+        object LabelCardNum: TLabel
+          Align = Bottom
+          Size.Width = 306.000000000000000000
+          Size.Height = 28.000000000000000000
+          Size.PlatformDefault = False
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.FontColor = xFFE2E8F0
+          Text = '••••  ••••  ••••  4829   ('#1575#1590#1594#1591' '#1604#1604#1602#1604#1576')'
+        end
+      end
+      object LayoutCardBack: TLayout
+        Align = Client
+        HitTest = False
+        Visible = False
+        Size.Width = 306.000000000000000000
+        Size.Height = 170.000000000000000000
+        Size.PlatformDefault = False
+        object LabelBackTitle: TLabel
+          Align = Top
+          Size.Width = 306.000000000000000000
+          Size.Height = 30.000000000000000000
+          Size.PlatformDefault = False
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = xFF93C5FD
+          Text = #1576#1610#1575#1606#1575#1578' '#1575#1604#1571#1605#1575#1606
+        end
+        object LabelCVV: TLabel
+          Align = Top
+          Margins.Top = 18.000000000000000000
+          Size.Width = 306.000000000000000000
+          Size.Height = 44.000000000000000000
+          Size.PlatformDefault = False
+          StyledSettings = []
+          TextSettings.Font.Size = 26.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = claWhite
+          Text = 'CVV: 842   |   EXP: 09/29'
+        end
+        object LabelBackHint: TLabel
+          Align = Bottom
+          Size.Width = 306.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          StyledSettings = []
+          TextSettings.Font.Size = 13.000000000000000000
+          TextSettings.FontColor = xCCFFFFFF
+          Text = #1575#1590#1594#1591' '#1604#1604#1593#1608#1583#1577' '#1604#1604#1608#1580#1607' '#1575#1604#1571#1605#1575#1605#1610
+        end
+      end
+    end
+    object GridActions: TGridPanelLayout
+      Align = Top
+      Margins.Top = 18.000000000000000000
+      ColumnCollection = <
+        item
+          Value = 50.000000000000000000
+        end
+        item
+          Value = 50.000000000000000000
+        end>
+      ControlCollection = <
+        item
+          Column = 0
+          Control = BtnDeposit
+          Row = 0
+        end
+        item
+          Column = 1
+          Control = BtnPay
+          Row = 0
+        end>
+      RowCollection = <
+        item
+          Value = 100.000000000000000000
+        end>
+      Size.Width = 350.000000000000000000
+      Size.Height = 56.000000000000000000
+      Size.PlatformDefault = False
+      object BtnDeposit: TRectangle
+        Align = Client
+        Cursor = crHandPoint
+        Fill.Color = xFF10B981
+        Margins.Right = 6.000000000000000000
+        Size.Width = 169.000000000000000000
+        Size.Height = 56.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Kind = None
+        XRadius = 18.000000000000000000
+        YRadius = 18.000000000000000000
+        OnClick = BtnDepositClick
+        object LabelDeposit: TLabel
+          Align = Client
+          HitTest = False
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = claWhite
+          TextSettings.HorzAlign = Center
+          Text = #1573#1610#1583#1575#1593' +$250'
+        end
+      end
+      object BtnPay: TRectangle
+        Align = Client
+        Cursor = crHandPoint
+        Fill.Color = xFF6366F1
+        Margins.Left = 6.000000000000000000
+        Size.Width = 169.000000000000000000
+        Size.Height = 56.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Kind = None
+        XRadius = 18.000000000000000000
+        YRadius = 18.000000000000000000
+        OnClick = BtnPayClick
+        object LabelPay: TLabel
+          Align = Client
+          HitTest = False
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.Font.Style = [fsBold]
+          TextSettings.FontColor = claWhite
+          TextSettings.HorzAlign = Center
+          Text = #1583#1601#1593' -$120'
+        end
+      end
+    end
+    object LabelTxTitle: TLabel
+      Align = Top
+      Margins.Top = 22.000000000000000000
+      Size.Width = 350.000000000000000000
+      Size.Height = 28.000000000000000000
+      Size.PlatformDefault = False
+      StyledSettings = []
+      TextSettings.Font.Size = 16.000000000000000000
+      TextSettings.Font.Style = [fsBold]
+      TextSettings.FontColor = xFFE2E8F0
+      Text = #1570#1582#1585' '#1575#1604#1593#1605#1604#1610#1575#1578
+    end
+    object LayoutTxList: TLayout
+      Align = Client
+      Margins.Top = 10.000000000000000000
+      Size.Width = 350.000000000000000000
+      Size.Height = 386.000000000000000000
+      Size.PlatformDefault = False
+      object RectTx1: TRectangle
+        Align = Top
+        Fill.Color = x22FFFFFF
+        Margins.Bottom = 10.000000000000000000
+        Padding.Left = 16.000000000000000000
+        Padding.Right = 16.000000000000000000
+        Size.Width = 350.000000000000000000
+        Size.Height = 68.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Color = x25FFFFFF
+        XRadius = 18.000000000000000000
+        YRadius = 18.000000000000000000
+        object LabelTx1: TLabel
+          Align = Client
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.FontColor = claWhite
+          Text = #1605#1578#1580#1585' Apple   —   -$89.00'
+        end
+      end
+      object RectTx2: TRectangle
+        Align = Top
+        Fill.Color = x22FFFFFF
+        Margins.Bottom = 10.000000000000000000
+        Padding.Left = 16.000000000000000000
+        Padding.Right = 16.000000000000000000
+        Size.Width = 350.000000000000000000
+        Size.Height = 68.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Color = x25FFFFFF
+        XRadius = 18.000000000000000000
+        YRadius = 18.000000000000000000
+        object LabelTx2: TLabel
+          Align = Client
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.FontColor = xFF34D399
+          Text = #1578#1581#1608#1610#1604' '#1608#1575#1585#1583'   —   +$650.00'
+        end
+      end
+      object RectTx3: TRectangle
+        Align = Top
+        Fill.Color = x22FFFFFF
+        Margins.Bottom = 10.000000000000000000
+        Padding.Left = 16.000000000000000000
+        Padding.Right = 16.000000000000000000
+        Size.Width = 350.000000000000000000
+        Size.Height = 68.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Color = x25FFFFFF
+        XRadius = 18.000000000000000000
+        YRadius = 18.000000000000000000
+        object LabelTx3: TLabel
+          Align = Client
+          StyledSettings = []
+          TextSettings.Font.Size = 15.000000000000000000
+          TextSettings.FontColor = claWhite
+          Text = #1575#1588#1578#1585#1575#1603' Cloud   —   -$19.99'
+        end
+      end
+    end
+  end
+end
