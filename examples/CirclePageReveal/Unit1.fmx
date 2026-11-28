@@ -1,0 +1,39 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Circle Page Reveal'
+  ClientHeight = 817
+  ClientWidth = 646
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnShow = FormShow
+  DesignerMasterStyle = 0
+  object Rectangle1: TRectangle
+    Align = Contents
+    Fill.Color = claCornsilk
+    Size.Width = 646.000000000000000000
+    Size.Height = 817.000000000000000000
+    Size.PlatformDefault = False
+    object Circle2: TCircle
+      Fill.Color = claDarkslateblue
+      Position.X = 140.000000000000000000
+      Position.Y = 616.000000000000000000
+      Size.Width = 121.000000000000000000
+      Size.Height = 121.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Kind = None
+      OnClick = Circle2Click
+    end
+    object Circle1: TCircle
+      Fill.Color = claCoral
+      Position.X = 324.000000000000000000
+      Position.Y = 616.000000000000000000
+      Size.Width = 121.000000000000000000
+      Size.Height = 121.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Kind = None
+      OnClick = Circle1Click
+    end
+  end
+end

@@ -1,0 +1,1 @@
+PlatformFile=C:\Users\samerassil\Documents\Embarcadero\Studio\SDKs\Android\platforms\android-37.2\android.jar
