@@ -333,8 +333,11 @@ TulipFluentMotion/
 
 ---
 
-## 📄 License
+## 📄 License & Credits
 
 This library is distributed under the terms of the **MIT License**. Free for commercial and open-source applications.
+
+- Sample illustrations in `examples/CirclePageReveal` designed by [Magnific](https://www.magnific.com) (Free License).
+- Sample arrow icons in `examples/CirclePageReveal` by [Font Awesome Free](https://fontawesome.com/license/free).
 
 <a href="https://www.buymeacoffee.com/samerassil" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" style="height: 60px !important;width: 217px !important;" ></a>

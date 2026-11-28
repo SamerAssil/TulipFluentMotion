@@ -341,6 +341,9 @@ TulipFluentMotion/
 
 ---
 
-## 📄 الترخيص (License)
+## 📄 الترخيص والاعتمادات (License & Credits)
 
 هذا المشروع مرخص تحت رخصة **MIT**. يمكنك استخدامه وتعديله بحرية في مشاريعك التجارية والشخصية.
+
+- الرسومات التوضيحية في مثال `examples/CirclePageReveal` من تصميم [Magnific](https://www.magnific.com) (رخصة مجانية مع ذكر المصدر).
+- أيقونات الأسهم في مثال `examples/CirclePageReveal` من [Font Awesome Free](https://fontawesome.com/license/free).
