@@ -13,7 +13,7 @@
 [![Graphics Engine](https://img.shields.io/badge/Renderer-Skia4Delphi%20%2B%20GPU%20SkSL-orange.svg)](https://github.com/skia4delphi/skia4delphi)
 [![DUnitX Tests](https://img.shields.io/badge/Tests-60%2F60%20Passed%20(100%25)-brightgreen.svg)]()
 [![Memory Hygiene](https://img.shields.io/badge/Memory%20Leaks-0%20(Zero%20Leaks)-success.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)]()
+[![License](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](LICENSE)
 
 ![غلاف TulipFluentMotion](media/hero-banner.svg)
 
@@ -343,7 +343,7 @@ TulipFluentMotion/
 
 ## 📄 الترخيص والاعتمادات (License & Credits)
 
-هذا المشروع مرخص تحت رخصة **MIT**. يمكنك استخدامه وتعديله بحرية في مشاريعك التجارية والشخصية.
+هذا المشروع مرخص تحت رخصة **Mozilla Public License 2.0 (MPL-2.0)**. يمكنك استخدامه مجاناً في مشاريعك التجارية والشخصية مغلقة المصدر (مع بقاء أي تعديلات على ملفات المكتبة نفسها تحت MPL-2.0، وتتوفر رخصة تجارية خاصة عند الطلب).
 
 - الرسومات التوضيحية في مثال `examples/CirclePageReveal` من تصميم [Magnific](https://www.magnific.com) (رخصة مجانية مع ذكر المصدر).
 - أيقونات الأسهم في مثال `examples/CirclePageReveal` من [Font Awesome Free](https://fontawesome.com/license/free).

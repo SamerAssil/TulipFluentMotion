@@ -9,7 +9,7 @@
 [![Graphics Engine](https://img.shields.io/badge/Renderer-Skia4Delphi%20%2B%20GPU%20SkSL-orange.svg)](https://github.com/skia4delphi/skia4delphi)
 [![DUnitX Tests](https://img.shields.io/badge/Tests-60%2F60%20Passed%20(100%25)-brightgreen.svg)]()
 [![Memory Hygiene](https://img.shields.io/badge/Memory%20Leaks-0%20(Zero%20Leaks)-success.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)]()
+[![License](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](LICENSE)
 
 
 ---
@@ -335,7 +335,7 @@ TulipFluentMotion/
 
 ## 📄 License & Credits
 
-This library is distributed under the terms of the **MIT License**. Free for commercial and open-source applications.
+This library is distributed under the terms of the **Mozilla Public License 2.0 (MPL-2.0)**. Free for commercial and open-source applications (modifications to library files must remain under MPL-2.0; commercial licensing available upon request).
 
 - Sample illustrations in `examples/CirclePageReveal` designed by [Magnific](https://www.magnific.com) (Free License).
 - Sample arrow icons in `examples/CirclePageReveal` by [Font Awesome Free](https://fontawesome.com/license/free).

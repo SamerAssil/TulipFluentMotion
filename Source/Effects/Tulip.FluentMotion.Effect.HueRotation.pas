@@ -4,7 +4,7 @@
   Unit:      Tulip.FluentMotion.Effect.HueRotation
   Author:    Samer Assil
   Copyright: (c) 2026 Samer Assil
-  License:   MIT (SPDX-License-Identifier: MIT)
+  License:   MPL-2.0 (SPDX-License-Identifier: MPL-2.0)
 *******************************************************************************}
 unit Tulip.FluentMotion.Effect.HueRotation;
 
