@@ -1,3 +1,11 @@
+{*******************************************************************************
+  TulipFluentMotion - Fluent Animation & Motion Library for Delphi FMX
+
+  Unit:      Tulip.FluentMotion.Effect.Ripple
+  Author:    Samer Assil
+  Copyright: (c) 2026 Samer Assil
+  License:   MIT (SPDX-License-Identifier: MIT)
+*******************************************************************************}
 unit Tulip.FluentMotion.Effect.Ripple;
 
 interface

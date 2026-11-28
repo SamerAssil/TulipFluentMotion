@@ -1,4 +1,12 @@
-﻿unit Unit1;
+﻿{*******************************************************************************
+  TulipFluentMotion - Fluent Animation & Motion Library for Delphi FMX
+
+  Unit:      Unit1
+  Author:    Samer Assil
+  Copyright: (c) 2026 Samer Assil
+  License:   MIT (SPDX-License-Identifier: MIT)
+*******************************************************************************}
+unit Unit1;
 
 interface
 
