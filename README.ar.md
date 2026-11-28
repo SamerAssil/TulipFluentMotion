@@ -238,17 +238,21 @@ LblTitle.Motion
 
 ## 🔗 سلاسل الحركات المترابطة (Chained Motion Pipeline)
 
-باستخدام الدالة `.&Then` و `.Wait`، يمكنك بناء تسلسل زمني معقد يجمع بين مراحل متوازية ومتعاقبة مع دوال رد النداء (Callbacks):
+باستخدام `.&Then` و `.Wait` و `.ThenDo`، يمكنك بناء تسلسل زمني يجمع بين مراحل متوازية (مع تجميع تراكمي بدون تعارض بين `Scale` و `Move` و `Shake`)، ومنحنيات مستقلة لكل تأثير عبر `WithEase`/`WithSpring` (أو `PhaseEase`/`PhaseSpring` للمرحلة كاملة)، وتنفيذ كود برمجي بين المراحل:
 
 ```pascal
 DialogBox.Motion
-  // المرحلة 1: انبثاق وظهور تدريجي متزامنان
-  .Scale(0.8, 1.0, 300).WithSpring(TFluentSpring.Bouncy)
-  .FadeIn(250)
+  // المرحلة 1: انبثاق وظهور متزامنان (بمنحنى مخصص لكل تأثير)
+  .WithEase(TFluentEase.OutCubic) // المنحنى الافتراضي للمرحلة
+  .Scale(0.8, 1.0, 300).WithSpring(TFluentSpring.Bouncy) // يخص Scale فقط
+  .FadeIn(250)                                           // يرث الافتراضي (OutCubic)
   .&Then
-  // المرحلة 2: انتظار 400ms دون حجب خيط الواجهة
+  // المرحلة 2: انتظار 400ms ثم تنفيذ كود برمجي وسط السلسلة
   .Wait(400)
-  .&Then
+  .ThenDo(procedure
+    begin
+      DialogBox.Caption := 'جاهز!';
+    end)
   // المرحلة 3: شعاع ليزري محيطي
   .BorderBeam($FF00E5FF, $FF9D4EDD, 3.0, 0.25, 1500)
   .OnProgress(procedure(const AProgress: Single)
@@ -322,6 +326,8 @@ TulipFluentMotion/
 │       ├── Tulip.FluentMotion.Effect.Shader.pas   # شيدرات SkSL وانكسار الزجاج (939 سطر)
 │       ├── Tulip.FluentMotion.Effect.Text.pas     # عناقيد الخط العربي والعدادات
 │       └── ...
+├── examples/                           # مشاريع أمثلة تطبيقية
+│   └── CirclePageReveal/               # مثال تبديل الواجهات بالدائرة
 ├── Tests/                              # جناح اختبارات DUnitX الآلية
 │   ├── TulipFluentMotionTests.dpr
 │   ├── Test.TulipFluentMotion.Engine.pas

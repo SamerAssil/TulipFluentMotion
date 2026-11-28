@@ -230,17 +230,21 @@ Includes **31 standard Penner and Bezier curves**:
 
 ## 🔗 Chained Motion Pipeline
 
-Using the `.&Then` barrier operator and `.Wait`, compose complex orchestration combining parallel phases, non-blocking delays, and lifecycle callbacks:
+Using `.&Then`, `.Wait`, and `.ThenDo`, compose complex orchestration combining parallel phases (with additive `Scale` + `Move` + `Shake` composition), per-effect `WithEase`/`WithSpring` (or `PhaseEase`/`PhaseSpring` for the whole phase), non-blocking delays, and inline callbacks:
 
 ```pascal
 DialogBox.Motion
-  // Phase 1: Concurrently scale and fade in
-  .Scale(0.8, 1.0, 300).WithSpring(TFluentSpring.Bouncy)
-  .FadeIn(250)
+  // Phase 1: Concurrently scale and fade in (each effect can use its own curve)
+  .WithEase(TFluentEase.OutCubic) // Default curve for this phase
+  .Scale(0.8, 1.0, 300).WithSpring(TFluentSpring.Bouncy) // Customizes Scale only
+  .FadeIn(250)                                           // Uses phase default (OutCubic)
   .&Then
-  // Phase 2: Non-blocking 400ms pause
+  // Phase 2: Non-blocking 400ms pause + inline callback
   .Wait(400)
-  .&Then
+  .ThenDo(procedure
+    begin
+      DialogBox.Caption := 'Ready!';
+    end)
   // Phase 3: Perimeter laser sweep
   .BorderBeam($FF00E5FF, $FF9D4EDD, 3.0, 0.25, 1500)
   .OnProgress(procedure(const AProgress: Single)
@@ -314,6 +318,8 @@ TulipFluentMotion/
 │       ├── Tulip.FluentMotion.Effect.Shader.pas   # SkSL runtime shaders & Liquid Glass
 │       ├── Tulip.FluentMotion.Effect.Text.pas     # Arabic grapheme clusters & counters
 │       └── ...
+├── examples/                           # Showcase sample projects
+│   └── CirclePageReveal/               # Dual-circle page reveal transition
 ├── Tests/                              # DUnitX test suite
 │   ├── TulipFluentMotionTests.dpr
 │   ├── Test.TulipFluentMotion.Engine.pas

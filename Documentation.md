@@ -668,17 +668,21 @@ CardView.Motion
 ## 11. Motion Pipelines, Sequencing & Runtime Controls
 
 
-### A. Phase Sequencing (`.&Then` and `.Wait`)
-The `.&Then` operator finalizes the active concurrent phase barrier and begins a subsequent phase:
+### A. Phase Sequencing (`.&Then`, `.Wait`, and `.ThenDo`)
+The `.&Then` operator finalizes the active concurrent phase barrier and begins a subsequent phase, while `.ThenDo` executes an inline callback between phases without nested `OnComplete` blocks:
 ```pascal
 DialogCard.Motion
-  // Phase 1: Concurrently scale and fade in
-  .Scale(0.8, 1.0, 300).WithSpring(TFluentSpring.Bouncy)
-  .FadeIn(250)
+  // Phase 1: Concurrently scale and fade in with independent curves
+  .WithEase(TFluentEase.OutCubic) // Phase default
+  .Scale(0.8, 1.0, 300).WithSpring(TFluentSpring.Bouncy) // Applies to Scale only
+  .FadeIn(250)                                           // Inherits OutCubic
   .&Then
-  // Non-blocking 300ms pause
+  // Non-blocking 300ms pause + inline state update
   .Wait(300)
-  .&Then
+  .ThenDo(procedure
+    begin
+      DialogCard.Tag := 1;
+    end)
   // Phase 2: Laser perimeter sweep
   .BorderBeam($FF00E5FF, $FF9D4EDD, 3.0, 0.25, 1500)
   .&Then
@@ -690,6 +694,10 @@ DialogCard.Motion
     end)
   .Start;
 ```
+
+### A2. Per-Effect Curves & Additive Position Composition
+- **Per-Effect `WithEase` / `WithSpring`:** Calling `.WithEase(...)` or `.WithSpring(...)` before effects sets the default curve for subsequent effects in the phase; calling it *after* an effect customizes only that preceding effect without overriding the default. Use `.PhaseEase(...)` or `.PhaseSpring(...)` to apply a curve to all effects already in the active phase.
+- **Additive Composition:** Anchor-compensated `Scale`, `Move`/`MoveX`/`MoveY`/`MoveTo`, and `Shake` apply incremental deltas per frame, so they can run concurrently in the same phase without overwriting each other's `Position`.
 
 ### B. Callbacks
 - `OnProgress(reference to procedure(const AProgress: Single))`: Receives normalized progress `(0.0 .. 1.0)` on every frame tick.
